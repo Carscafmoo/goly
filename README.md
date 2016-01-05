@@ -17,9 +17,13 @@ I also recommend using a virtual environment for dependency management.  Python 
 > . venv/bin/activate
 ```
 When activated, you can run all of your dependency installations.  We create a file called `requirements.txt` to help manage this:
-`> pip install -r requirements.txt`
+```
+> pip install -r requirements.txt
+```
 Then, to deactivate your virtual environment, simply run
-`> deactivate`
+```
+> deactivate
+```
 
 ### Storage layer
 Our storage layer is MySQL -- you will need a functional deployment of MySQL on your back-end server. 
