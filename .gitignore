@@ -12,5 +12,5 @@ _mailinglist
 .tox
 .cache/
 .idea/
-credentials.py
-yoyo.ini
+alembic.ini
+*.cfg
