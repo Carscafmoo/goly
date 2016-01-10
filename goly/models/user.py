@@ -31,6 +31,12 @@ class User(db.Model):
     def get_id(self):
         return unicode(self.id)
 
+    def exists(self):
+        if (self.query.filter_by(email=self.email)).first():
+            return True
+
+        return False
+
     def set_password(self, password):
         self.password = generate_password_hash(password)
 
@@ -38,13 +44,21 @@ class User(db.Model):
         return check_password_hash(self.password, password)
 
     def to_json(self):
-        return json.dumps({"email": self.email, 
+        return json.dumps({
+            "id": self.id,
+            "email": self.email, 
             "first_name": self.first_name, 
             "last_name": self.last_name,
             "registered_on": str(self.registered_on)
             })
 
     def persist(self):
+        if (self.exists()):
+            raise DuplicateEntryError(self.email)
+        
         db.session.add(self)
         db.session.commit()
-    
+        
+class DuplicateEntryError(Exception):
+    def __init__(self, entry):
+        self.entry = entry

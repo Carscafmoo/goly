@@ -13,4 +13,5 @@ _mailinglist
 .cache/
 .idea/
 alembic.ini
+alembic-test.ini
 *.cfg
