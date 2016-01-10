@@ -2,6 +2,7 @@
 from goly import db
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
+import json
 
 class User(db.Model):
     id = db.Column('id', db.Integer, primary_key=True)
@@ -35,6 +36,13 @@ class User(db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
+
+    def to_json(self):
+        return json.dumps({"email": self.email, 
+            "first_name": self.first_name, 
+            "last_name": self.last_name,
+            "registered_on": str(self.registered_on)
+            })
 
     def persist(self):
         db.session.add(self)
