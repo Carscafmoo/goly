@@ -1,6 +1,6 @@
 from goly import app, db
 from flask_login import LoginManager, login_user, logout_user, current_user, login_required
-from flask import request, render_template, redirect, flash, url_for
+from flask import request, render_template, redirect, flash, url_for, g
 from models.user import User
 
 login_manager = LoginManager()
@@ -10,6 +10,11 @@ login_manager.login_view = 'login'
 @login_manager.user_loader
 def load_user(id):
     return User.query.get(int(id))
+
+@app.before_request
+def before_request():
+    g.user = current_user
+    print g.user
 
 @app.route('/register' , methods=['GET','POST'])
 def register():
@@ -27,16 +32,25 @@ def login():
     
     email = request.form['email']
     password = request.form['password']
-    registered_user = User.query.filter_by(email=email,password=password).first()
+    registered_user = User.query.filter_by(email=email).first()
     if not registered_user:
-        flash('Username or Password is invalid' , 'error')
-        
+        flash('Unknown email ' + email, 'error')
+
+        return redirect(url_for('login'))
+    elif not registered_user.check_password(password):
+        flash('Incorrect password!', 'error')
+
         return redirect(url_for('login'))
     
     login_user(registered_user)
     flash('Logged in successfully')
     
     return redirect(request.args.get('next') or url_for('index'))
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    return redirect(url_for('login')) 
 
 @app.route('/')
 @login_required

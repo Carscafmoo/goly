@@ -26,4 +26,21 @@ Then, to deactivate your virtual environment, simply run
 ```
 
 ### Storage layer
-Our storage layer is MySQL -- you will need a functional deployment of MySQL on your back-end server. 
+The developers of this project use MySQL, and the requirements.txt ships with python-mysql included. However, you could technically use any SQLAlchemy-supported system, but you may need to install the relevant packages yourself.  To use the MySQL storage that the project ships with, you will need a functional deployment of MySQL. 
+
+Migrations are effected using [alembic](https://alembic.readthedocs.org/en/latest/).
+
+Configuration
+----
+Goly expects a file called `goly.cfg` at the `goly/goly` level.  This file must contain the information provided in the following example:
+```
+SQLALCHEMY_DATABASE_URI='mysql://user:password@host/db'
+SQLALCHEMY_ECHO = False
+SECRET_KEY = 'your secret key here'
+#DEBUG = True # comment out for deployment obviously
+```
+For alembic's migrations to work, Goly also expects an `alembic.ini` file at the `goly/goly` level.  See [Alembic's documentation on editing the alembic.ini](https://alembic.readthedocs.org/en/latest/tutorial.html#editing-the-ini-file) file for more information on what that file should look like.
+
+Todos
+----
+* Pretty much everything!

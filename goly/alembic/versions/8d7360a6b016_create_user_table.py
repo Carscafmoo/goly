@@ -23,7 +23,7 @@ def upgrade():
         sa.Column('email', sa.String(50), nullable=False, unique=True, index=True),
         sa.Column('first_name', sa.String(50)),
         sa.Column('last_name', sa.String(50)),
-        sa.Column('password', sa.String(50)),
+        sa.Column('password', sa.String(160)),
         sa.Column('registered_on', sa.DateTime)
     )
 

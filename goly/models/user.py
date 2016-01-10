@@ -1,5 +1,6 @@
 """This package defines the user class for goly, including ORM nonsense"""
 from goly import db
+from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 
 class User(db.Model):
@@ -12,7 +13,7 @@ class User(db.Model):
 
     def __init__(self, email, password, first_name, last_name):
         self.email = email
-        self.password = password
+        self.set_password(password)
         self.first_name = first_name
         self.last_name = last_name
         self.registered_on = datetime.datetime.utcnow()
@@ -28,6 +29,12 @@ class User(db.Model):
  
     def get_id(self):
         return unicode(self.id)
+
+    def set_password(self, password):
+        self.password = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password, password)
 
     def persist(self):
         db.session.add(self)
