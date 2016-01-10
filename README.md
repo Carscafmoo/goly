@@ -32,14 +32,14 @@ Migrations are effected using [alembic](https://alembic.readthedocs.org/en/lates
 
 Configuration
 ----
-Goly expects a file called `goly.cfg` at the `goly/goly` level.  This file must contain the information provided in the following example:
+Goly expects a file called `goly.cfg` at the `[app]/goly` level.  This file must contain the information provided in the following example:
 ```
 SQLALCHEMY_DATABASE_URI='mysql://user:password@host/db'
 SQLALCHEMY_ECHO = False
 SECRET_KEY = 'your secret key here'
 #DEBUG = True # comment out for deployment obviously
 ```
-For alembic's migrations to work, Goly also expects an `alembic.ini` file at the `goly/goly` level.  See [Alembic's documentation on editing the alembic.ini](https://alembic.readthedocs.org/en/latest/tutorial.html#editing-the-ini-file) file for more information on what that file should look like.
+For alembic's migrations to work, Goly also expects an `alembic.ini` file at the `[app]/` level.  See [Alembic's documentation on editing the alembic.ini](https://alembic.readthedocs.org/en/latest/tutorial.html#editing-the-ini-file) file for more information on what that file should look like.
 
 Todos
 ----
