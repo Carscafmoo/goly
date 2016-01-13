@@ -1,9 +1,21 @@
 """This package defines the user class for goly, including ORM nonsense"""
-from goly import db
+from goly import db, errors
 from werkzeug.security import generate_password_hash, check_password_hash
 import datetime
 import json
-
+"""
+@TODO: 
+    - update password
+    - update ... other stuff
+    - get endpoint
+    - email validation
+    - forgot password
+    - Refactor user routes into its own module
+    - Update README with user docs
+    - POST request validation
+    - Convert all empty return values to {} so they can be json decoded
+    - Test login remember me / logout?
+"""
 class User(db.Model):
     id = db.Column('id', db.Integer, primary_key=True)
     email = db.Column('email', db.String(50), nullable=False, unique=True, index=True)
@@ -32,10 +44,13 @@ class User(db.Model):
         return unicode(self.id)
 
     def exists(self):
-        if (self.query.filter_by(email=self.email)).first():
+        if (User.pull_by_email(self.email)):
             return True
 
         return False
+
+    def full_name(self):
+        return self.first_name + ' ' + self.last_name
 
     def set_password(self, password):
         self.password = generate_password_hash(password)
@@ -54,11 +69,38 @@ class User(db.Model):
 
     def persist(self):
         if (self.exists()):
-            raise DuplicateEntryError(self.email)
+            raise errors.ResourceAlreadyExistsError("user", self.email)
         
         db.session.add(self)
         db.session.commit()
-        
-class DuplicateEntryError(Exception):
-    def __init__(self, entry):
-        self.entry = entry
+
+    def destroy(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    def delete(self, password):
+        """Outwardly-facing method for deleting a user."""
+        if self.check_password(password):
+            self.destroy()
+        else: raise errors.UnauthorizedError()
+
+    def update_password(self, old_password, new_password):
+        if (self.check_password(old_password)):
+            self.set_password(new_password)
+            if (self.exists()):
+                db.session.add(self)
+                db.session.flush()
+                db.session.commit()
+
+        else:
+            raise errors.UnauthorizedError
+            
+    @classmethod
+    def pull_by_id(self, id):
+        return self.query.filter_by(id=id).first()
+
+    @classmethod
+    def pull_by_email(self, email):
+        return self.query.filter_by(email=email).first()
+
+
