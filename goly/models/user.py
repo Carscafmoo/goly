@@ -5,9 +5,8 @@ import datetime
 import json
 """
 @TODO: 
-    - update password
     - update ... other stuff
-    - get endpoint
+    - get endpoint, multi-get endpoint (get/user/?ids=?)
     - email validation
     - forgot password
     - Refactor user routes into its own module
