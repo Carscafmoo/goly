@@ -9,4 +9,4 @@ else:
 from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy(app)
 
-import goly.routes
+import goly.routes.users

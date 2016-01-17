@@ -7,12 +7,8 @@ import json
 @TODO: 
     - update ... other stuff
     - get endpoint, multi-get endpoint (get/user/?ids=?)
-    - email validation
     - forgot password
-    - Refactor user routes into its own module
     - Update README with user docs
-    - POST request validation
-    - Convert all empty return values to {} so they can be json decoded
     - Test login remember me / logout?
 """
 class User(db.Model):

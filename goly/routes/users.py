@@ -50,7 +50,7 @@ def logout():
     logout_user()
     return empty_ok(204)
 
-@app.route("/user/delete", methods=['POST']) # POST because you have to post your password
+@app.route("/users/delete", methods=['POST']) # POST because you have to post your password
 def delete_user():
     validate_form(request.form, ['email', 'password'])
     user = User.pull_by_email(request.form['email'])
@@ -61,7 +61,7 @@ def delete_user():
 
     return empty_ok(204)
 
-@app.route("/user/update-password", methods=['POST'])
+@app.route("/users/update-password", methods=['POST'])
 def update_password():
     validate_form(request.form, ['email', 'old_password', 'new_password'])
     user = User.pull_by_email(request.form['email'])
@@ -71,12 +71,12 @@ def update_password():
 
     return empty_ok()
 
-@app.route("/user/me")
+@app.route("/users/me")
 @login_required
 def get_me():
     return current_user.to_json(), HTTP_200_OK
 
-@app.route("/user/<id>")
+@app.route("/users/<id>")
 @login_required
 def get_user(id):
     user = User.pull_by_id(id)
@@ -85,7 +85,7 @@ def get_user(id):
 
     return user.to_json(), HTTP_200_OK
 
-@app.route('/')
+@app.route('/users/index')
 @login_required
 def index():
     return '{"data": "Hello, world"}', HTTP_200_OK
