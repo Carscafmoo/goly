@@ -17,7 +17,7 @@ def load_user(id):
 def before_request():
     g.user = current_user
 
-@app.route('/register', methods=['POST'])
+@app.route('/register/', methods=['POST'])
 def register():
     validate_form(request.form, ['email', 'password', 'first_name', 'last_name'])
     user = User(request.form['email'], request.form['password'], request.form['first_name'], request.form['last_name'])
@@ -26,7 +26,7 @@ def register():
     
     return return_val, 201
  
-@app.route('/login', methods=['POST'])
+@app.route('/login/', methods=['POST'])
 def login():
     validate_form(request.form, ['email', 'password'])
     email = request.form['email']
@@ -45,12 +45,12 @@ def login():
     
     return empty_ok(201)
 
-@app.route('/logout', methods=['POST'])
+@app.route('/logout/', methods=['POST'])
 def logout():
     logout_user()
     return empty_ok(204)
 
-@app.route("/users/delete", methods=['POST']) # POST because you have to post your password
+@app.route("/users/delete/", methods=['POST']) # POST because you have to post your password
 def delete_user():
     validate_form(request.form, ['email', 'password'])
     user = User.pull_by_email(request.form['email'])
@@ -61,7 +61,7 @@ def delete_user():
 
     return empty_ok(204)
 
-@app.route("/users/update-password", methods=['POST'])
+@app.route("/users/update-password/", methods=['POST'])
 def update_password():
     validate_form(request.form, ['email', 'old_password', 'new_password'])
     user = User.pull_by_email(request.form['email'])
@@ -71,7 +71,7 @@ def update_password():
 
     return empty_ok()
 
-@app.route("/users/update-email", methods=['POST'])
+@app.route("/users/update-email/", methods=['POST'])
 def update_email():
     validate_form(request.form, ['old_email', 'new_email', 'password'])
     user = User.pull_by_email(request.form['old_email'])
@@ -81,7 +81,7 @@ def update_email():
 
     return empty_ok()
 
-@app.route("/users/update", methods=['POST'])
+@app.route("/users/update/", methods=['POST'])
 def update():
     validate_form(request.form, ['email', 'password'])
     user = User.pull_by_email(request.form['email'])
@@ -94,12 +94,12 @@ def update():
 
     return empty_ok()
 
-@app.route("/users/me")
+@app.route("/users/me/")
 @login_required
 def get_me():
     return current_user.to_json(), HTTP_200_OK
 
-@app.route("/users/<id>")
+@app.route("/users/<id>/")
 @login_required
 def get_user(id):
     user = User.pull_by_id(id)
@@ -108,7 +108,7 @@ def get_user(id):
 
     return user.to_json(), HTTP_200_OK
 
-@app.route('/users/index', methods=['GET'])
+@app.route('/users/index/', methods=['GET'])
 @login_required
 def index():
     if ('sort_order' in request.args):

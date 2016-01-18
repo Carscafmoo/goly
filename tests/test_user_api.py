@@ -22,10 +22,10 @@ class TestUserApi(unittest.TestCase):
         for x, y in self.new_user.iteritems():
             if x != 'password': invalid_user[x] = y 
         
-        res = tc.post('/register', data=invalid_user)
+        res = tc.post('/register/', data=invalid_user)
         self.assertInvalid(res, 'password')
         
-        res = tc.post("/register", data=self.new_user)
+        res = tc.post("/register/", data=self.new_user)
         self.assertOk(res, 201)
         data = json.loads(res.data)
         self.assertIn('id', data)
@@ -35,7 +35,7 @@ class TestUserApi(unittest.TestCase):
 
         ## you should get a well-formatted error if the user already exists.
         self.new_user['password'] = "new-test-pass"
-        res = tc.post("/register", data=self.new_user)
+        res = tc.post("/register/", data=self.new_user)
         self.assertEqual(res.status_code, 409)
         data = json.loads(res.data)
         self.assertIn('detail', data)
@@ -48,161 +48,161 @@ class TestUserApi(unittest.TestCase):
         self.assertTrue(user.exists()) ## I don't understand why but this is necessary or else line 45 fails
 
         tc = self.test_client
-        res = tc.post("/users/delete", data={"email": "fake email"})
+        res = tc.post("/users/delete/", data={"email": "fake email"})
         self.assertInvalid(res, 'password')
 
-        res = tc.post("/users/delete", data={"email": "fake email", "password": "test-pass"})
+        res = tc.post("/users/delete/", data={"email": "fake email", "password": "test-pass"})
         data = json.loads(res.data)
         self.assertInvalidCredentials(res)
         self.assertTrue(user.exists())
 
         tc = self.test_client
-        res = tc.post("/users/delete", data={"email": user.email, "password": "nottherightpass"})
+        res = tc.post("/users/delete/", data={"email": user.email, "password": "nottherightpass"})
         data = json.loads(res.data)
         self.assertInvalidCredentials(res)
         self.assertTrue(user.exists())
 
-        res = tc.post("/users/delete", data={"email": user.email, "password": "test-pass"})
+        res = tc.post("/users/delete/", data={"email": user.email, "password": "test-pass"})
         self.assertOk(res, 204)
         self.assertFalse(user.exists())
 
     def test_login(self):
         tc = self.test_client
-        res = tc.post('/register', data=self.new_user)
+        res = tc.post('/register/', data=self.new_user)
 
-        res = tc.post('/login', data={"email": self.new_user['email']})
+        res = tc.post('/login/', data={"email": self.new_user['email']})
         self.assertInvalid(res, 'password')
 
-        res = tc.post('/login', data={"email": "notreal", "password": self.new_user['password']})
+        res = tc.post('/login/', data={"email": "notreal", "password": self.new_user['password']})
         data = json.loads(res.data)
         self.assertIn('detail', data)
         self.assertIn('notreal is not a registered', data['detail'])
         self.assertEqual(res.status_code, 401)
 
-        res = tc.post('/login', data={"email": self.new_user['email'], "password": "notpass"})
+        res = tc.post('/login/', data={"email": self.new_user['email'], "password": "notpass"})
         data = json.loads(res.data)
         self.assertIn('detail', data)
         self.assertIn('Incorrect password', data['detail'])
         self.assertEqual(res.status_code, 401)
 
-        res = tc.post('/login', data={"email": self.new_user['email'], "password": self.new_user['password']})
+        res = tc.post('/login/', data={"email": self.new_user['email'], "password": self.new_user['password']})
         self.assertOk(res, 201)
 
     def test_update_password(self):
         tc = self.test_client
-        res = tc.post("/register", data=self.new_user)
+        res = tc.post("/register/", data=self.new_user)
         self.assertOk(res, 201)
 
         ## Shoudl fail if missing a key
-        res = tc.post('/users/update-password', data={"email": self.new_user['email'], "new_password": "test"})
+        res = tc.post('/users/update-password/', data={"email": self.new_user['email'], "new_password": "test"})
         self.assertInvalid(res, 'old_password')
 
         ## should fail for non-existent emails
-        res = tc.post('/users/update-password', data={"email": "notreal", "old_password": "test-pass", "new_password": "new-pass"})
+        res = tc.post('/users/update-password/', data={"email": "notreal", "old_password": "test-pass", "new_password": "new-pass"})
         self.assertInvalidCredentials(res)
 
-        res = tc.post('/users/update-password', data={"email": self.new_user['email'], "old_password": "notreal", "new_password": "new-pass"})
+        res = tc.post('/users/update-password/', data={"email": self.new_user['email'], "old_password": "notreal", "new_password": "new-pass"})
         self.assertInvalidCredentials(res)
 
-        res = tc.post('/users/update-password', data={"email": self.new_user['email'], "old_password": self.new_user['password'], "new_password": "new-pass"})
+        res = tc.post('/users/update-password/', data={"email": self.new_user['email'], "old_password": self.new_user['password'], "new_password": "new-pass"})
         self.assertOk(res)
-        res = tc.post("/login", data={"email": self.new_user['email'], "password": "new-pass"})
+        res = tc.post("/login/", data={"email": self.new_user['email'], "password": "new-pass"})
         self.assertOk(res, 201)
 
     def test_get_me(self):
         tc = self.test_client
-        res = tc.get('/users/me') ## Should return anonymous user
+        res = tc.get('/users/me/') ## Should return anonymous user
         self.assertRequiresLogin(res)
         
-        res = tc.post('/register', data=self.new_user)
+        res = tc.post('/register/', data=self.new_user)
         self.assertOk(res, 201)
         data = json.loads(res.data)
         
-        res = tc.post('/login', data={"email": self.new_user['email'], "password": self.new_user['password']})
+        res = tc.post('/login/', data={"email": self.new_user['email'], "password": self.new_user['password']})
         self.assertOk(res, 201)
 
-        res = tc.get('/users/me')
+        res = tc.get('/users/me/')
         self.assertOk(res)
         for key in ["registered_on", "first_name", "last_name", "id", "email"]:
             self.assertIn(key, data)
             if (key in self.new_user):
                 self.assertEqual(self.new_user[key], data[key])
 
-        res = tc.post('/logout')
-        res = tc.get('/users/me') ## Should return anonymous user
+        res = tc.post('/logout/')
+        res = tc.get('/users/me/') ## Should return anonymous user
         self.assertRequiresLogin(res)
 
     def test_get_user(self):
         tc = self.test_client
-        res = tc.get('/users/1')
+        res = tc.get('/users/1/')
         self.assertRequiresLogin(res)
 
-        res = tc.post('/register', data=self.new_user)
+        res = tc.post('/register/', data=self.new_user)
         self.assertOk(res, 201)
         user_data = json.loads(res.data)
         
-        res = tc.post('/login', data={"email": self.new_user['email'], "password": self.new_user['password']})
+        res = tc.post('/login/', data={"email": self.new_user['email'], "password": self.new_user['password']})
         self.assertOk(res, 201)
 
-        res = tc.get('/users/' + str(user_data['id']))
+        res = tc.get('/users/' + str(user_data['id']) + '/')
         self.assertOk(res)
         self.assertEqual(user_data, json.loads(res.data))
 
-        res = tc.get('/users/0')
+        res = tc.get('/users/0/')
         self.assertEqual(res.status_code, 404)
 
     def test_update_email(self):
         tc = self.test_client
         post_data = {"old_email": self.new_user['email'], "new_email": "test-new-email@example.com", "password": self.new_user['password']}
-        res = tc.post('/users/update-email', data=post_data)
+        res = tc.post('/users/update-email/', data=post_data)
         self.assertInvalidCredentials(res)
 
-        res = tc.post('/register', data=self.new_user)
+        res = tc.post('/register/', data=self.new_user)
         self.assertOk(res, 201)
 
         post_data['password'] = 'not-my-pass'
-        res = tc.post('/users/update-email', data=post_data)
+        res = tc.post('/users/update-email/', data=post_data)
         self.assertInvalidCredentials(res)
 
         post_data['password'] = None
-        res = tc.post('/users/update-email', data=post_data)
+        res = tc.post('/users/update-email/', data=post_data)
         self.assertInvalid(res, 'password')
 
         post_data['password'] = self.new_user['password']
-        res = tc.post('/users/update-email', data=post_data)
+        res = tc.post('/users/update-email/', data=post_data)
         self.assertOk(res)
 
-        res = tc.post('/login', data={"email": post_data['new_email'], "password": post_data['password']})
+        res = tc.post('/login/', data={"email": post_data['new_email'], "password": post_data['password']})
         self.assertOk(res, 201)
 
     def test_update(self):
         tc = self.test_client
 
-        res = tc.post('/register', data=self.new_user)
+        res = tc.post('/register/', data=self.new_user)
         self.assertOk(res, 201)
         user = json.loads(res.data)
 
         post_data = {"password": self.new_user['password'], "first_name": "new-first-name"}
 
-        res = tc.post('/users/update', data=post_data)
+        res = tc.post('/users/update/', data=post_data)
         self.assertInvalid(res, 'email')
 
         post_data['email'] = "not-real-email"
-        res = tc.post('/users/update', data=post_data)
+        res = tc.post('/users/update/', data=post_data)
         self.assertInvalidCredentials(res)        
 
         post_data['email'] = self.new_user['email']
         post_data['password'] = 'not-real-pass'
-        res = tc.post('/users/update', data=post_data)
+        res = tc.post('/users/update/', data=post_data)
         self.assertInvalidCredentials(res)    
 
         post_data['password'] = self.new_user['password']
-        res = tc.post('/users/update', data=post_data)
+        res = tc.post('/users/update/', data=post_data)
         self.assertOk(res)
 
-        res = tc.post('/login', data={'email': self.new_user['email'], 'password': self.new_user['password']})
+        res = tc.post('/login/', data={'email': self.new_user['email'], 'password': self.new_user['password']})
         self.assertOk(res, 201)
-        res = tc.get('/users/me')
+        res = tc.get('/users/me/')
         self.assertOk(res)
         updated_user = json.loads(res.data)
         for key, value in user.iteritems():
@@ -211,14 +211,14 @@ class TestUserApi(unittest.TestCase):
 
     def test_get_index(self):
         tc = self.test_client
-        res = tc.get('/users/index')
+        res = tc.get('/users/index/')
         self.assertRequiresLogin(res)
 
         setup.create_test_users()
-        res = tc.post('/login', data={'email': "test_a@example.com", 'password': self.new_user['password']})
+        res = tc.post('/login/', data={'email': "test_a@example.com", 'password': self.new_user['password']})
         self.assertOk(res, 201)
 
-        res = tc.get('/users/index')
+        res = tc.get('/users/index/')
         self.assertOk(res)
         data = json.loads(res.data)
         self.assertIn('users', data)
@@ -227,7 +227,7 @@ class TestUserApi(unittest.TestCase):
         for x in range(ord('a'), ord('a') + 19):
             self.assertEqual(data[x - ord('a')]['email'], 'test_' + chr(x) + '@example.com') ## Should sort by email 
 
-        res = tc.get('/users/index?count=3&offset=3')
+        res = tc.get('/users/index/?count=3&offset=3')
         self.assertOk(res)
         data = json.loads(res.data)
         self.assertIn('users', data)
@@ -236,7 +236,7 @@ class TestUserApi(unittest.TestCase):
         for x in range(ord('a'), ord('a') + 2):
             self.assertEqual(data[x - ord('a')]['email'], 'test_' + chr(x + 3) + '@example.com') ## Should still sort by email 
 
-        res = tc.get('/users/index?count=3&offset=3&sort=last_name&sort_order=desc')
+        res = tc.get('/users/index/?count=3&offset=3&sort=last_name&sort_order=desc')
         self.assertOk(res)
         data = json.loads(res.data)
         self.assertIn('users', data)
@@ -246,10 +246,10 @@ class TestUserApi(unittest.TestCase):
             self.assertEqual(data[x - ord('a')]['email'], 'test_' + chr(2 * ord('a') + 25 - x - 3) + '@example.com')
 
 
-        res = tc.get('/users/index?count=3&offset=3&sort=not_a_real_field&sort_order=desc')
+        res = tc.get('/users/index/?count=3&offset=3&sort=not_a_real_field&sort_order=desc')
         self.assertInvalid(res, 'sort')
         
-        res = tc.get('/users/index?count=3&offset=3&sort=last_name&sort_order=pineapple')
+        res = tc.get('/users/index/?count=3&offset=3&sort=last_name&sort_order=pineapple')
         self.assertInvalid(res, 'sort_order')
         
     def assertInvalidCredentials(self, res):
