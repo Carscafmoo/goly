@@ -103,6 +103,17 @@ class User(db.Model):
             db.session.flush()
             db.session.commit()
 
+    def update(self, data):
+        fields = set(['first_name', 'last_name']) & set(data.keys())
+        for key in fields:
+            setattr(self, key, data[key])
+
+        if (self.exists()):
+            db.session.add(self)
+            db.session.flush()
+            db.session.commit()
+
+
 
             
     @classmethod

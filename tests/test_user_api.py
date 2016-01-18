@@ -174,6 +174,40 @@ class TestUserApi(unittest.TestCase):
         res = tc.post('/login', data={"email": post_data['new_email'], "password": post_data['password']})
         self.assertOk(res, 201)
 
+    def test_update(self):
+        tc = self.test_client
+
+        res = tc.post('/register', data=self.new_user)
+        self.assertOk(res, 201)
+        user = json.loads(res.data)
+
+        post_data = {"password": self.new_user['password'], "first_name": "new-first-name"}
+
+        res = tc.post('/users/update', data=post_data)
+        self.assertInvalid(res, 'email')
+
+        post_data['email'] = "not-real-email"
+        res = tc.post('/users/update', data=post_data)
+        self.assertInvalidCredentials(res)        
+
+        post_data['email'] = self.new_user['email']
+        post_data['password'] = 'not-real-pass'
+        res = tc.post('/users/update', data=post_data)
+        self.assertInvalidCredentials(res)    
+
+        post_data['password'] = self.new_user['password']
+        res = tc.post('/users/update', data=post_data)
+        self.assertOk(res)
+
+        res = tc.post('/login', data={'email': self.new_user['email'], 'password': self.new_user['password']})
+        self.assertOk(res, 201)
+        res = tc.get('/users/me')
+        self.assertOk(res)
+        updated_user = json.loads(res.data)
+        for key, value in user.iteritems():
+            if (key == 'first_name'): self.assertEqual(updated_user[key], 'new-first-name')
+            else: self.assertEqual(updated_user[key], user[key])
+
 
     def assertInvalidCredentials(self, res):
         """Logic for asserting that credentials passed were invalid"""

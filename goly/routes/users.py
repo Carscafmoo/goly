@@ -81,6 +81,19 @@ def update_email():
 
     return empty_ok()
 
+@app.route("/users/update", methods=['POST'])
+def update():
+    validate_form(request.form, ['email', 'password'])
+    user = User.pull_by_email(request.form['email'])
+    if (not user):
+        raise UnauthorizedError
+    if (not user.check_password(request.form['password'])):
+        raise UnauthorizedError
+
+    user.update(request.form)
+
+    return empty_ok()
+
 @app.route("/users/me")
 @login_required
 def get_me():

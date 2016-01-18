@@ -68,5 +68,26 @@ class TestUser(unittest.TestCase):
         user = User.pull_by_id(self.new_user.get_id())
         self.assertEqual(user.email, "test@example.com")
 
+    def test_update(self):
+        self.assertFalse(self.new_user.exists())
+        self.new_user.update({"not-a-real-key": "anything"}) ## This whould actually run but not do anything.
+        self.assertFalse(self.new_user.exists())
+
+        self.new_user.update({"first_name": "new-first-name"})
+        self.assertEqual(self.new_user.first_name, "new-first-name")
+        self.assertFalse(self.new_user.exists())
+
+        self.new_user.persist()
+        user = User.pull_by_id(self.new_user.get_id())
+        self.assertEqual(user.first_name, "new-first-name")
+        self.new_user.update({"first_name": "first"})
+        user = User.pull_by_id(self.new_user.get_id())
+        self.assertEqual(user.first_name, "first")
+        
+        self.new_user.update({"email": "this-shouldnt-work"})
+        self.assertIsNone(User.pull_by_email("this-shouldnt-work"))
+        self.assertEqual(self.new_user.email, "test@example.com")
+
+
 if __name__ == '__main__':
     unittest.main()
