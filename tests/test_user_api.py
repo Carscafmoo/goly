@@ -150,6 +150,31 @@ class TestUserApi(unittest.TestCase):
         res = tc.get('/users/0')
         self.assertEqual(res.status_code, 404)
 
+    def test_update_email(self):
+        tc = self.test_client
+        post_data = {"old_email": self.new_user['email'], "new_email": "test-new-email@example.com", "password": self.new_user['password']}
+        res = tc.post('/users/update-email', data=post_data)
+        self.assertInvalidCredentials(res)
+
+        res = tc.post('/register', data=self.new_user)
+        self.assertOk(res, 201)
+
+        post_data['password'] = 'not-my-pass'
+        res = tc.post('/users/update-email', data=post_data)
+        self.assertInvalidCredentials(res)
+
+        post_data['password'] = None
+        res = tc.post('/users/update-email', data=post_data)
+        self.assertInvalid(res, 'password')
+
+        post_data['password'] = self.new_user['password']
+        res = tc.post('/users/update-email', data=post_data)
+        self.assertOk(res)
+
+        res = tc.post('/login', data={"email": post_data['new_email'], "password": post_data['password']})
+        self.assertOk(res, 201)
+
+
     def assertInvalidCredentials(self, res):
         """Logic for asserting that credentials passed were invalid"""
         data = json.loads(res.data)

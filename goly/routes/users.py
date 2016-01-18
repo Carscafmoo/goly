@@ -71,6 +71,16 @@ def update_password():
 
     return empty_ok()
 
+@app.route("/users/update-email", methods=['POST'])
+def update_email():
+    validate_form(request.form, ['old_email', 'new_email', 'password'])
+    user = User.pull_by_email(request.form['old_email'])
+    if (not user):
+        raise UnauthorizedError
+    user.update_email(request.form['new_email'], request.form['password'])
+
+    return empty_ok()
+
 @app.route("/users/me")
 @login_required
 def get_me():

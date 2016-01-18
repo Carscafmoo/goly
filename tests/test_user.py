@@ -51,6 +51,22 @@ class TestUser(unittest.TestCase):
         user = User.pull_by_id(self.new_user.get_id())
         self.assertTrue(user.check_password("new-test-pass"))
 
+    def test_update_email(self):
+        with self.assertRaises(goly.errors.UnauthorizedError):
+            self.new_user.update_email("test_new_email@example.com", "not-my-password")
+
+        self.new_user.update_email("test_new_email@example.com", "test-pass")
+        self.assertEqual(self.new_user.email, "test_new_email@example.com")
+        self.assertFalse(self.new_user.exists())
+
+        self.new_user.persist()
+        self.new_user.update_email("test@example.com", "test-pass")
+        self.assertTrue(self.new_user.exists())
+        self.assertEqual(self.new_user.email, "test@example.com")
+        self.assertIsNotNone(User.pull_by_email("test@example.com"))
+
+        user = User.pull_by_id(self.new_user.get_id())
+        self.assertEqual(user.email, "test@example.com")
 
 if __name__ == '__main__':
     unittest.main()

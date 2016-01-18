@@ -48,7 +48,7 @@ class User(db.Model):
         return self.first_name + ' ' + self.last_name
 
     def set_password(self, password):
-        self.password = generate_password_hash(password)
+        self.password = generate_password_hash(password, salt_length=32)
 
     def check_password(self, password):
         return check_password_hash(self.password, password)
@@ -89,6 +89,21 @@ class User(db.Model):
 
         else:
             raise errors.UnauthorizedError
+
+    def update_email(self, new_email, password):
+        if (not self.check_password(password)):
+            raise errors.UnauthorizedError    
+        
+        if User.pull_by_email(new_email):
+            raise ResourceAlreadyExistsError("user", new_email)
+        
+        self.email = new_email
+        if (self.exists()):
+            db.session.add(self)
+            db.session.flush()
+            db.session.commit()
+
+
             
     @classmethod
     def pull_by_id(self, id):
