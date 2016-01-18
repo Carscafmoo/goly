@@ -3,6 +3,7 @@ import unittest
 from goly import app, db
 from goly.models.user import User
 import json
+import datetime
 
 class TestUserApi(unittest.TestCase):
     test_client = app.test_client()
@@ -208,7 +209,49 @@ class TestUserApi(unittest.TestCase):
             if (key == 'first_name'): self.assertEqual(updated_user[key], 'new-first-name')
             else: self.assertEqual(updated_user[key], user[key])
 
+    def test_get_index(self):
+        tc = self.test_client
+        res = tc.get('/users/index')
+        self.assertRequiresLogin(res)
 
+        setup.create_test_users()
+        res = tc.post('/login', data={'email': "test_a@example.com", 'password': self.new_user['password']})
+        self.assertOk(res, 201)
+
+        res = tc.get('/users/index')
+        self.assertOk(res)
+        data = json.loads(res.data)
+        self.assertIn('users', data)
+        data = data['users']
+        self.assertEqual(len(data), 20) # default is 20
+        for x in range(ord('a'), ord('a') + 19):
+            self.assertEqual(data[x - ord('a')]['email'], 'test_' + chr(x) + '@example.com') ## Should sort by email 
+
+        res = tc.get('/users/index?count=3&offset=3')
+        self.assertOk(res)
+        data = json.loads(res.data)
+        self.assertIn('users', data)
+        data = data['users']
+        self.assertEqual(len(data), 3)
+        for x in range(ord('a'), ord('a') + 2):
+            self.assertEqual(data[x - ord('a')]['email'], 'test_' + chr(x + 3) + '@example.com') ## Should still sort by email 
+
+        res = tc.get('/users/index?count=3&offset=3&sort=last_name&sort_order=desc')
+        self.assertOk(res)
+        data = json.loads(res.data)
+        self.assertIn('users', data)
+        data = data['users']
+        self.assertEqual(len(data), 3)
+        for x in range(ord('a'), ord('a') + 2):
+            self.assertEqual(data[x - ord('a')]['email'], 'test_' + chr(2 * ord('a') + 25 - x - 3) + '@example.com')
+
+
+        res = tc.get('/users/index?count=3&offset=3&sort=not_a_real_field&sort_order=desc')
+        self.assertInvalid(res, 'sort')
+        
+        res = tc.get('/users/index?count=3&offset=3&sort=last_name&sort_order=pineapple')
+        self.assertInvalid(res, 'sort_order')
+        
     def assertInvalidCredentials(self, res):
         """Logic for asserting that credentials passed were invalid"""
         data = json.loads(res.data)
@@ -230,6 +273,9 @@ class TestUserApi(unittest.TestCase):
         data = json.loads(res.data)
         self.assertIn('detail', data)
         self.assertIn(missing_field, data['detail'])
+
+    
+
 
 if __name__ == '__main__':
     unittest.main()

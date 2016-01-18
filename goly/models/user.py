@@ -5,8 +5,6 @@ import datetime
 import json
 """
 @TODO: 
-    - update ... other stuff
-    - get endpoint, multi-get endpoint (get/user/?ids=?)
     - forgot password
     - Update README with user docs
     - Test login remember me / logout?
@@ -53,14 +51,17 @@ class User(db.Model):
     def check_password(self, password):
         return check_password_hash(self.password, password)
 
-    def to_json(self):
-        return json.dumps({
+    def to_dict(self):
+        return {
             "id": self.id,
             "email": self.email, 
             "first_name": self.first_name, 
             "last_name": self.last_name,
             "registered_on": str(self.registered_on)
-            })
+            }
+
+    def to_json(self):
+        return json.dumps(self.to_dict())
 
     def persist(self):
         if (self.exists()):
@@ -113,7 +114,17 @@ class User(db.Model):
             db.session.flush()
             db.session.commit()
 
+    @classmethod
+    def pull(self, params):
+        count = params['count'] if 'count' in params else 20
+        offset = params['offset'] if 'offset' in params else 0
+        sort  = params['sort'] if 'sort' in params and params['sort'] in ['id', 'email', 'first_name', 'last_name', 'registered_on'] else 'email'
+        sort_order = params['sort_order'] if 'sort_order' in params else 'asc'
 
+        order_by = getattr(self, sort)
+        if (sort_order == 'desc'): order_by = order_by.desc()
+        
+        return self.query.order_by(order_by).limit(count).offset(offset).all()
 
             
     @classmethod

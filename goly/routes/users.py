@@ -108,10 +108,18 @@ def get_user(id):
 
     return user.to_json(), HTTP_200_OK
 
-@app.route('/users/index')
+@app.route('/users/index', methods=['GET'])
 @login_required
 def index():
-    return '{"data": "Hello, world"}', HTTP_200_OK
+    if ('sort_order' in request.args):
+        if (request.args['sort_order'] not in ['asc', 'desc']):
+            raise InvalidRequest(['sort_order must be either asc or desc'])
+    if ('sort' in request.args):
+        if (request.args['sort'] not in ['first_name', 'last_name', 'id', 'email', 'registered_on']):
+            raise InvalidRequest(['sort can only be one of first_name, last_name, id, email, registered_on'])
+    
+    ## We return an object rather than a list because of this obscure security issue: http://flask.pocoo.org/docs/0.10/security/#json-security
+    return jsonify({"users": [x.to_dict() for x in User.pull(request.args)]}), HTTP_200_OK
 
 
 @app.errorhandler(ResourceAlreadyExistsError)
