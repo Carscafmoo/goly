@@ -66,7 +66,7 @@ def update_password():
     validate_form(request.form, ['email', 'old_password', 'new_password'])
     user = User.pull_by_email(request.form['email'])
     if (not user):
-        raise UnauthorizedError
+        raise UnauthorizedError()
     user.update_password(request.form['old_password'], request.form['new_password'])
 
     return empty_ok()
