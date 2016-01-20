@@ -19,15 +19,16 @@ OK responses will include a `status_code` in the 200 range.  The resulting `data
 
 User API
 ----
-**/register/**
-Methods: POST
-Purpose: Create a new user
+**/register/**  
+Methods: POST  
+Purpose: Create a new user  
 Accepts: 
  - email:  A semantically valid email address; must be unique
  - password: A password for the new user
  - first_name:  The first name of the user
- - last_name: The last name of the user
-Returns:
+ - last_name: The last name of the user  
+
+Returns:  
 - status code: 201
 - data: 
   - id: unique integer identifier of the user
@@ -35,153 +36,166 @@ Returns:
   - first_name: the created user's first name
   - last_name: the created user's last name
   - registered_on: the UTC time at which the user registered
+
 Errors:
 - Status code 400: Invalid request
 - Status code 409: Resource already exists, in case of a duplicate email.
 
-**/login/**
-Methods: POST
-Purpose: Log in as an existing user 
-Accepts: 
+**/login/**  
+Methods: POST  
+Purpose: Log in as an existing user  
+Accepts:
  - email:  A semantically valid email address; must exist as a user
  - password: The password of the user
  - remember: Boolean true or false (default); True keeps the user logged in
+
 Returns:
 - status code: 201
 - data: Empty
+
 Errors:
 - Status code 400: Invalid request
 - Status code 401: Invalid credentials (see details for more information)
 
-**/logout/**
-Methods: POST
-Purpose: Log out current user
-Accepts:  empty
+**/logout/**  
+Methods: POST  
+Purpose: Log out current user  
+Accepts:  empty  
 Returns:
 - status code: 204
 - data: empty
+
 Errors: None
 
-**/users/delete/**
-Methods: POST
-Purpose: Delete a user
-Accepts: 
+**/users/delete/**  
+Methods: POST  
+Purpose: Delete a user  
+Accepts:
  - email:  A semantically valid email address; must be an existing user
  - password: The password of the user to delete
+
 Returns:
 - status code: 204
 - data: empty
+
 Errors:
 - Status code 400: Invalid request
 - Status code 401: Invalid credentials (see details for more information)
 
-**/users/update-password/**
-Methods: POST
-Purpose: Update a user's password
-Accepts: 
+**/users/update-password/**  
+Methods: POST  
+Purpose: Update a user's password  
+Accepts:
  - email:  A semantically valid email address; must be an existing user
  - old_password: The current password of the user whose password to change
  - new_password: The new password for the user
+
 Returns:
 - status code: 200
 - data: empty
+
 Errors:
 - Status code 400: Invalid request
 - Status code 401: Invalid credentials (see details for more information)
 
-**/users/update-email/**
-Methods: POST
-Purpose: Update a user's email address
+**/users/update-email/**  
+Methods: POST  
+Purpose: Update a user's email address  
 Accepts: 
  - old_email:  A semantically valid email address; must be an existing user
  - new_email: A semantically valid email address; must not be an existing user
  - password: The password of the user
+
 Returns:
  - status code: 200
  - data: empty
+
 Errors:
 - Status code 400: Invalid request
 - Status code 401: Invalid credentials (see details for more information)
  - Status code 409: Resource already exists, in case of a duplicate new email.
 
-**/users/update/**
-Methods: POST
-Purpose: Update a user's non-email or password fields
-Accepts: 
+**/users/update/**  
+Methods: POST  
+Purpose: Update a user's non-email or password fields  
+Accepts:
  - email:  A semantically valid email address; must be an existing user
  - password: The password of the user to update
  - first_name: Optional, a new first name for the user
  - last_name: Optional, a new last name for the user
+
 Returns:
  - status code: 200
  - data: empty
+
 Errors:
 - Status code 400: Invalid request
 - Status code 401: Invalid credentials (see details for more information)
 
-**/users/me/**
-Methods: GET
-Purpose: Get the current user's information
-Requires login
+**/users/me/**  
+Methods: GET  
+Purpose: Get the current user's information  
+Requires login  
 Returns:
  - status code: 200
  - data: same as returned by /users/[id]
+
 Errors:
 - Status code 401: You must login
 
-**/users/[id]/**
-Methods: GET
-Purpose: Get the specified user's information
-Requires login
+**/users/[id]/**  
+Methods: GET  
+Purpose: Get the specified user's information  
+Requires login  
 Returns:
- - status code: 200
- - data:
+- status code: 200
+- data:
   - id: unique integer identifier of the user
   - email: user's email
   - first_name: the user's first name
   - last_name: the user's last name
   - registered_on: the UTC time at which the user registered
+
 Errors:
 - Status code 401: You must login
 - Status code 404: Not found
 
-**/users/[id]/**
-Methods: GET
-Purpose: Get the specified user's information
-Requires login
+**/users/[id]/**  
+Methods: GET  
+Purpose: Get the specified user's information  
+Requires login  
 Returns:
- - status code: 200
- - data:
+- status code: 200
+- data:
   - id: unique integer identifier of the user
   - email: user's email
   - first_name: the user's first name
   - last_name: the user's last name
   - registered_on: the UTC time at which the user registered
+
 Errors:
 - Status code 401: You must login
 - Status code 404: Not found
 
-**/users/[index]/**
-Methods: GET
-Purpose: Get the a list user's information
-Requires login
+**/users/[index]/**  
+Methods: GET  
+Purpose: Get the a list user's information  
+Requires login  
 Parameters:
 - count: numeric, the number of entries to receive; default 20
 - offset: numeric, the number of entries to skip; default 0
 - sort: a field to sort by, must be one of 'id', 'email', 'first\_name', 'last\_name', 'registered_on'; default is 'email'
 - sort_order: "asc" or "desc", default "asc"
+
 Returns:
- - status code: 200
- - data:
+- status code: 200
+- data:
   - users: an array of length no greater than _count_ with user objects as returned by /users/[id]/
+
 Errors:
 - Status code 400: Invalid request
 - Status code 401: You must login
  
-
-
-
-
 Installation
 ====
 The Goly back-end is a Python Flask application.  To install, you'll need Python 2.7 (I use 2.7.10).  Instructions for installing Python 2.7 can be found on the [Python website](https://www.python.org/).  
