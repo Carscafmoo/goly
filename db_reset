@@ -1,0 +1,4 @@
+alembic -c alembic-test.ini downgrade base
+alembic -c alembic-test.ini upgrade head
+alembic downgrade base
+alembic upgrade head
