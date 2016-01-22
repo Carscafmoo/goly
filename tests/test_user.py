@@ -7,7 +7,7 @@ import goly.errors
 class TestUser(unittest.TestCase):
     def setUp(self):
         User.query.delete()
-        self.new_user = User("test@example.com", "test-pass", "first", "last")
+        self.new_user = setup.get_test_user()
 
     def tearDown(self):
         User.query.delete()

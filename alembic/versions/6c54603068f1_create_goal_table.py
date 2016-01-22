@@ -26,8 +26,10 @@ def upgrade():
         sa.Column('target', sa.Integer, nullable=False),
         sa.Column('input_type', sa.Enum('binary', 'numeric'), nullable=False),
         sa.Column('active', sa.Boolean, nullable=False, default=True, index=True),
+        sa.Column('public', sa.Boolean, nullable=False, default=False),
         sa.Column('created', sa.DateTime, nullable=False),
-        sa.UniqueConstraint('user', 'name', name='uniq')
+        sa.UniqueConstraint('user', 'name', name='uniq_usr'),
+        sa.Index('public_idx', 'public', 'active')
     )
 
 def downgrade():

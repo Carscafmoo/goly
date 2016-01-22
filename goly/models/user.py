@@ -1,22 +1,21 @@
 """This package defines the user class for goly, including ORM nonsense"""
 from goly import db, errors
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import MetaData, Table
+from sqlalchemy.ext.declarative import declarative_base
 import datetime
 import json
 """
 @TODO: 
     - forgot password
-    - Update README with user docs
     - Test login remember me / logout?
 """
-class User(db.Model):
-    id = db.Column('id', db.Integer, primary_key=True)
-    email = db.Column('email', db.String(50), nullable=False, unique=True, index=True)
-    first_name = db.Column('first_name', db.String(50))
-    last_name = db.Column('last_name', db.String(50))
-    password = db.Column('password', db.String(50))
-    registered_on = db.Column('registered_on', db.DateTime)    
+md = MetaData(bind=db.engine)
+user = Table('user', md, autoload=True)
+Base = declarative_base(metadata=md)
 
+class User(Base, db.Model):
+    __table__ = user
     def __init__(self, email, password, first_name, last_name):
         self.email = email
         self.set_password(password)

@@ -10,3 +10,4 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy(app)
 
 import goly.routes.users
+import goly.routes.goals
