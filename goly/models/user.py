@@ -23,6 +23,7 @@ class User(Base, db.Model):
         self.last_name = last_name
         self.registered_on = datetime.datetime.utcnow()
 
+        
     def is_authenticated(self):
         return True
  
@@ -33,7 +34,10 @@ class User(Base, db.Model):
         return False
  
     def get_id(self):
-        return unicode(self.id)
+        if (not self.id):
+            self.id = self.pull_by_email(self.email).get_id()
+
+        return self.id
 
     def exists(self):
         if (User.pull_by_email(self.email)):

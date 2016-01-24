@@ -4,9 +4,13 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import datetime
 from goly import db
 from goly.models.user import User
+from goly.models.goal import Goal
 import copy
+import json
 
-test_user = User("test@example.com", "test-pass", "first", "last")
+test_user_pass = "test-pass"
+test_user_name = "test@example.com"
+test_user = User(test_user_name, test_user_pass, "first", "last")
 
 def create_test_users():
     for x in range(ord('a'), ord('a') + 26):
@@ -19,9 +23,50 @@ def create_test_users():
     db.session.commit()
 
 def create_test_user():
-    get_test_user().persist()
+    test_user = get_test_user()
+    if (not test_user.exists()):
+        test_user.persist()
 
     return test_user
 
 def get_test_user():
     return copy.deepcopy(test_user)
+
+def create_test_goals():
+    user = create_test_user()
+    for x in range(ord('a'), ord('a') + 26):
+        x = chr(x)
+        name = "test goal " + str(x)
+        new_goal = Goal(user, name, "Is this a test?", "daily", 10, "numeric")
+        new_goal.registered = new_goal.created - datetime.timedelta(hours=30-(ord(x)-ord('a')))
+        db.session.add(new_goal)
+
+    db.session.commit()
+
+def assertInvalidCredentials(test, res):
+    """Logic for asserting that credentials passed were invalid"""
+    data = json.loads(res.data)
+    test.assertIn('detail', data)
+    test.assertIn('Invalid credentials', data['detail'])
+    test.assertEqual(res.status_code, 401)
+
+def assertOk(test, res, code=200):
+    test.assertEqual(res.status_code, code)
+
+def assertRequiresLogin(test, res):
+    test.assertEqual(res.status_code, 401)
+    data = json.loads(res.data)
+    test.assertIn('detail', data)
+    test.assertIn("You must login to view this page", data['detail'])
+
+def assertInvalid(test, res, missing_field):
+    test.assertEqual(res.status_code, 400)
+    data = json.loads(res.data)
+    test.assertIn('detail', data)
+    test.assertIn(missing_field, data['detail'])
+
+def assertBadData(test, res, message):
+    test.assertEqual(res.status_code, 400)
+    data = json.loads(res.data)
+    test.assertIn('detail', data)
+    test.assertIn(message, data['detail'])
