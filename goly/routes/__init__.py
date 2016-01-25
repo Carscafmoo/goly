@@ -67,3 +67,11 @@ def validate_form(form, fields):
     missing_fields = set(fields) - set(form.keys())
     if (missing_fields):
         raise InvalidRequest(missing_fields)
+
+def validate_sort(args, sort_options):
+    if ('sort_order' in args):
+        if (args['sort_order'] not in ['asc', 'desc']):
+            raise InvalidRequest(['sort_order must be either asc or desc'])
+    if ('sort' in args):
+        if (args['sort'] not in sort_options):
+            raise InvalidRequest(['sort can only be one of ' + ", ".join(sort_options)])

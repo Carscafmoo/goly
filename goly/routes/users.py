@@ -5,7 +5,7 @@ from flask_login import login_user, logout_user, current_user, login_required
 from flask import request, g, jsonify
 from goly.models.user import User
 from goly.errors import UnauthorizedError, InvalidRequest, NotFoundError
-from goly.routes import validate_form, empty_ok, login_manager
+from goly.routes import validate_form, empty_ok, login_manager, validate_sort
 
 @login_manager.user_loader
 def load_user(id):
@@ -109,13 +109,8 @@ def get_user(id):
 @app.route('/users/index/', methods=['GET'])
 @login_required
 def index():
-    if ('sort_order' in request.args):
-        if (request.args['sort_order'] not in ['asc', 'desc']):
-            raise InvalidRequest(['sort_order must be either asc or desc'])
-    if ('sort' in request.args):
-        if (request.args['sort'] not in ['first_name', 'last_name', 'id', 'email', 'registered_on']):
-            raise InvalidRequest(['sort can only be one of first_name, last_name, id, email, registered_on'])
-    
+    validate_sort(request.args, ['first_name', 'last_name', 'id', 'email', 'registered_on'])
+            
     ## We return an object rather than a list because of this obscure security issue: http://flask.pocoo.org/docs/0.10/security/#json-security
     return jsonify({"users": [x.to_dict() for x in User.pull(request.args)]}), HTTP_200_OK
 

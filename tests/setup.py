@@ -12,6 +12,10 @@ test_user_pass = "test-pass"
 test_user_name = "test@example.com"
 test_user = User(test_user_name, test_user_pass, "first", "last")
 
+other_user_name = "otheruser@exmaple.com"
+other_user_pass = "test-pass"
+other_user = User(other_user_name, other_user_pass, "other", "user")
+
 def create_test_users():
     for x in range(ord('a'), ord('a') + 26):
         x = chr(x)
@@ -29,8 +33,20 @@ def create_test_user():
 
     return test_user
 
+
 def get_test_user():
     return copy.deepcopy(test_user)
+
+def get_other_user():
+    return copy.deepcopy(other_user)
+
+def create_other_user():
+    other_user = get_other_user()
+    if (not other_user.exists()):
+        other_user.persist()
+
+    return other_user
+
 
 def create_test_goals():
     user = create_test_user()
@@ -70,3 +86,9 @@ def assertBadData(test, res, message):
     data = json.loads(res.data)
     test.assertIn('detail', data)
     test.assertIn(message, data['detail'])
+
+def assert404(test, res):
+    test.assertEqual(res.status_code, 404)
+    data = json.loads(res.data)
+    test.assertIn("detail", data)
+    test.assertIn("does not exist", data['detail'])

@@ -81,17 +81,22 @@ class Goal(Base, db.Model):
 
         return it
 
+    def validate_boolean(self, boo, name):
+        if (isinstance(boo, basestring)):
+            if (boo.lower() == 'false'): boo = False
+            elif (boo.lower() == 'true'): boo = True
+
+        assert isinstance(boo, bool), name + " must be a boolean"
+
+        return boo
+
     @validates("active")
     def validate_active(self, key, active):
-        assert isinstance(active, bool), "Active must be a boolean"
-
-        return active
+        return self.validate_boolean(active, "Active")
 
     @validates("public")
     def validate_public(self, key, public):
-        assert isinstance(public, bool), "Public must be a boolean"
-
-        return public
+        return self.validate_boolean(public, "Public")
 
     def to_dict(self):
         return { 
@@ -155,9 +160,9 @@ class Goal(Base, db.Model):
         if (sort_order == 'desc'): order_by = order_by.desc()
 
         if (public_only):
-            return self.query.filter_by(public=True).order_by(order_by).limit(count).offset(offset).all()
+            return self.query.filter_by(user=user).filter_by(public=True).order_by(order_by).limit(count).offset(offset).all()
         
-        return self.query.order_by(order_by).limit(count).offset(offset).all()
+        return self.query.filter_by(user=user).order_by(order_by).limit(count).offset(offset).all()
 
     @classmethod
     def pull_by_id(self, id):
@@ -177,6 +182,8 @@ class Goal(Base, db.Model):
             raise errors.UnauthorizedError()
     
         goal.destroy() ## Should raise something if the goal doesn't exist
+
+
         
 
     
