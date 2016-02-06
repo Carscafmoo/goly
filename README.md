@@ -177,9 +177,9 @@ Errors:
 - Status code 401: You must login
 - Status code 404: Not found
 
-**/users/[index]/**  
+**/users/index/**  
 Methods: GET  
-Purpose: Get the a list user's information  
+Purpose: Get a list of users' information  
 Requires login  
 Parameters:
 - count: numeric, the number of entries to receive; default 20
@@ -195,6 +195,138 @@ Returns:
 Errors:
 - Status code 400: Invalid request
 - Status code 401: You must login
+ 
+Goal API
+----
+**/goals/create/**  
+Methods: POST  
+Purpose: Create a new goal for the current user
+Requires login  
+Accepts:
+- name: A (short) name to display for the goal, e.g., "Friend Call"
+- prompt: A prompt (question) to answer, e.g., "Did you call a friend today?"
+- frequency: The frequency with which this task should be performed -- one of "daily", "weekly", "monthly", "quarerly", or "yearly"
+- target: The target number of times within the frequency range to perform the task (e.g., 1 [friend call per day] or 5 [workouts per week]) 
+- input_type: Either "numeric" or "binary."  
+  - Numeric: Enter a number to indicate the number of times you performed the task (e.g., if your goal is to practice guitar 180 minutes / week, your prompt might be "How many minutes of guitar did you practice today?" and your answer might be 45.
+  - Binary: A yes / no action.  (e.g., if your goal is to call a friend every day, your prompt might be "Did you call a friend today" and your answer might be "Yes.")
+
+Returns:  
+- status code: 201
+- data: 
+  - id: The ID of the newly created goal
+  - user: The ID of the user who created the goal 
+  - name: The name of the goal
+  - prompt: The goal's prompt
+  - frequency: The goal's frequency
+  - target: The numerical target of the goal
+  - input_type: The input type of the goal
+  - active: Whether the goal is currently active (Default: true)
+  - public: Whether the goal is currently publicly viewable (Default: false)
+  - created: The time at which the goal was created
+
+Errors:
+- Status code 400: Invalid request
+- Status code 401: You must login
+- Status code 409: Resource already exists, in case of a duplicate name
+
+**/goals/delete/**  
+Methods: POST  
+Purpose: Delete a goal for the current user
+Requires login  
+Accepts:
+- id: The ID of the goal to delete
+
+Returns:  
+- status code: 204
+- data: empty
+
+Errors:
+- Status code 400: Invalid request
+- Status code 401: You must login
+- Status code 401: Invalid Credentials (trying to delete a goal that is not the current user's)
+- Status code 409: Resource already exists, in case of a duplicate name
+
+**/goals/update/**  
+Methods: POST  
+Purpose: Update an existing goal for the current user
+Requires login  
+Accepts:
+- id: Required, the ID of the goal to update
+- name (optional): A new (short) name to display for the goal, e.g., "Friend Call". Must be unique.
+- prompt (optional): A new prompt (question) to answer, e.g., "Did you call a friend today?"
+- frequency (optional): The new frequency with which this task should be performed -- one of "daily", "weekly", "monthly", "quarerly", or "yearly"
+- target (optional): The new target number of times within the frequency range to perform the task (e.g., 1 [friend call per day] or 5 [workouts per week]) 
+- input_type (optional): Either "numeric" or "binary."  
+  - Numeric: Enter a number to indicate the number of times you performed the task (e.g., if your goal is to practice guitar 180 minutes / week, your prompt might be "How many minutes of guitar did you practice today?" and your answer might be 45.
+  - Binary: A yes / no action.  (e.g., if your goal is to call a friend every day, your prompt might be "Did you call a friend today" and your answer might be "Yes.")
+- active (optional): True / False, whether the goal should be considered "active" (i.e., prompted for nightly)
+- public (optional): True / False, whether the goal and its progress should be displayed publicly to other users
+
+Returns:  
+- status code: 200
+- data: empty
+
+Errors:
+- Status code 400: Invalid request
+- Status code 401: You must login
+- Status code 401: Invalid Credentials (attempting to update another user's goal)
+- Status code 404: Specified goal does not exist
+- Status code 409: Resource already exists, in case of a duplicate name
+  
+**/goals/[id]/**  
+Methods: GET  
+Purpose: Get information about a single goal
+Requires login  
+
+Returns:
+- status code: 200
+- data:
+  - A single goal, as returned by the /goals/create/ endpoint.
+
+Errors:
+- Status code 400: Invalid request
+- Status code 401: You must login
+- Status code 401: Invalid Credentials (attempting to access another user's private goal)
+- Status code 404: Not Found (specified goal does not exist)
+
+**/goals/users/[id]/**  
+Methods: GET  
+Purpose: Get a user's public goals
+Requires login  
+Parameters:
+- count: numeric, the number of entries to receive; default 20
+- offset: numeric, the number of entries to skip; default 0
+- sort: a field to sort by, must be one of 'id', 'created', 'name', 'frequency'; default is 'name'.  Return is always sorted with active goals first
+- sort_order: "asc" or "desc", default "asc"
+Returns:
+- status code: 200
+- data:
+  - goals: An array of goals as returned by /goals/[id]/
+
+Errors:
+- Status code 400: Invalid request
+- Status code 401: You must login
+- Status code 404: Not Found (specified user ID does not exist)
+
+**/goals/users/me/**  
+Methods: GET  
+Purpose: Get current user's public and private goals
+Requires login  
+Parameters:
+- count: numeric, the number of entries to receive; default 20
+- offset: numeric, the number of entries to skip; default 0
+- sort: a field to sort by, must be one of 'id', 'created', 'name', 'frequency'; default is 'name'.  Return is always sorted with active goals first
+- sort_order: "asc" or "desc", default "asc"
+Returns:
+- status code: 200
+- data:
+  - goals: An array of goals as returned by /goals/[id]/
+
+Errors:
+- Status code 400: Invalid request
+- Status code 401: You must login
+
  
 Installation
 ====
