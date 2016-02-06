@@ -14,13 +14,14 @@ Base = declarative_base(metadata=md)
 class Goal(Base, db.Model):
     __table__ = goal
 
-    def __init__(self, user, name, prompt, frequency, target, input_type):
+    def __init__(self, user, name, prompt, frequency, target, input_type, check_in_frequency):
         self.user = user
         self.name = name
         self.prompt = prompt
         self.frequency = frequency
         self.target = target
         self.input_type = input_type
+        self.check_in_frequency = check_in_frequency
         self.active = True
         self.public = False
         self.created = datetime.datetime.now()
@@ -75,6 +76,12 @@ class Goal(Base, db.Model):
 
         return it
 
+    @validates("check_in_frequency")
+    def validate_check_in_frequency(self, key, freq):
+        assert freq in ['daily', 'weekly', 'monthly', 'weekdays', 'weekends'], "Check-in frequency must be one of 'daily', 'weekly', 'monthly', 'weekdays', 'weekends'"
+
+        return freq
+
     def validate_boolean(self, boo, name):
         if (isinstance(boo, basestring)):
             if (boo.lower() == 'false'): boo = False
@@ -99,6 +106,7 @@ class Goal(Base, db.Model):
             "name": self.name,
             "prompt": self.prompt,
             "frequency": self.frequency,
+            "check_in_frequency": self.check_in_frequency,
             "target": self.target,
             "input_type": self.input_type,
             "active": self.active,
@@ -127,7 +135,7 @@ class Goal(Base, db.Model):
         db.session.commit()
 
     def update(self, data):
-        fields = set(['name', 'prompt', 'frequency', 'target', 'input_type', 'active', 'public']) & set(data.keys())
+        fields = set(['name', 'prompt', 'frequency', 'check_in_frequency', 'target', 'input_type', 'active', 'public']) & set(data.keys())
         for key in fields:
             if (key == 'name'):
                 if (self.pull_by_name(self.user, data[key])):

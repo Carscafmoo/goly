@@ -12,8 +12,14 @@ from goly.routes import validate_form, empty_ok, validate_sort
 @app.route("/goals/create/", methods=['POST'])
 @login_required
 def create_goal():
-    validate_form(request.form, ["name", "prompt", "frequency", "target", "input_type"])
-    goal = Goal(current_user, request.form['name'], request.form['prompt'], request.form['frequency'], request.form['target'], request.form['input_type'])
+    validate_form(request.form, ["name", "prompt", "frequency", "target", "input_type", "check_in_frequency"])
+    goal = Goal(current_user, 
+        request.form['name'], 
+        request.form['prompt'], 
+        request.form['frequency'], 
+        request.form['target'], 
+        request.form['input_type'],
+        request.form['check_in_frequency'])
 
     goal.persist()
 

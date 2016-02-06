@@ -24,6 +24,7 @@ def upgrade():
         sa.Column('name', sa.String(50), nullable=False, index=True),
         sa.Column('prompt', sa.String(255), nullable=False, index=False),
         sa.Column('frequency', sa.Enum('daily', 'weekly', 'monthly', 'quarterly', 'yearly'), nullable=False),
+        sa.Column('check_in_frequency', sa.Enum('daily', 'weekly', 'monthly', 'weekdays', 'weekends'), nullable=False),
         sa.Column('target', sa.Integer, nullable=False),
         sa.Column('input_type', sa.Enum('binary', 'numeric'), nullable=False),
         sa.Column('active', sa.Boolean, nullable=False, default=True, index=True),

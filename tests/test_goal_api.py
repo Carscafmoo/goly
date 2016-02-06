@@ -9,7 +9,12 @@ import datetime
 
 class TestUserApi(unittest.TestCase):
     test_client = app.test_client()
-    new_goal = {"name": "Test goal", "prompt": "How many new goals did you create today?", "frequency": "daily", "target": 1, "input_type": "numeric"}
+    new_goal = {"name": "Test goal", 
+                "prompt": "How many new goals did you create today?", 
+                "frequency": "daily", 
+                "target": 1, 
+                "input_type": "numeric",
+                "check_in_frequency": "daily"}
 
     @classmethod
     def setUpClass(self):
@@ -136,6 +141,7 @@ class TestUserApi(unittest.TestCase):
         data['input_type'] = "binary"
         data['active'] = False
         data['public'] = True
+        data['check_in_frequency'] = "daily"
         
         res = self.test_client.post("/goals/update/", data=data)
         setup.assertOk(self, res, 200)
@@ -153,6 +159,7 @@ class TestUserApi(unittest.TestCase):
         bad_data['input_type'] = "numeric"
         bad_data['active'] = True
         bad_data['public'] = "banana"
+        bad_data['check_in_frequency'] = "daily"
 
         res = self.test_client.post("/goals/update/", data=bad_data)
         setup.assertBadData(self, res, "Public must be a boolean")

@@ -54,7 +54,7 @@ def create_test_goals():
     for x in range(ord('a'), ord('a') + 25):
         x = chr(x)
         name = "test goal " + str(x)
-        new_goal = Goal(user, name, "Is this a test?", "daily", 10, "numeric")
+        new_goal = Goal(user, name, "Is this a test?", "daily", 10, "numeric", "daily")
         new_goal.created = new_goal.created - datetime.timedelta(hours=30-(ord(x)-ord('a')))
         db.session.add(new_goal)
     db.session.flush()
