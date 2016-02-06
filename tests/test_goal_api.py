@@ -3,6 +3,7 @@ import unittest
 from goly import app, db
 from goly.models.user import User
 from goly.models.goal import Goal
+from sqlalchemy import func
 import json
 import datetime
 
@@ -23,12 +24,12 @@ class TestUserApi(unittest.TestCase):
         db.session.commit()
 
     def setUp(self):
-        Goal.query.delete()
+        db.session.query(Goal).delete()
         db.session.commit()
 
     def tearDown(self):
         self.logout()
-        Goal.query.delete()
+        db.session.query(Goal).delete()
         db.session.commit()
 
 
@@ -207,33 +208,139 @@ class TestUserApi(unittest.TestCase):
 
     def test_get_my_goals(self):
         ## Requires login
-        res = self.test_client.get("/goals/users/me")
+        res = self.test_client.get("/goals/users/me/")
         setup.assertRequiresLogin(self, res)
         
         # Empty if user has no goals
         self.login()
-        res = self.test_client.get("/goals/users/me")
+        res = self.test_client.get("/goals/users/me/")
         setup.assertOk(self, res)
         data = json.loads(res.data)
         self.assertIn("goals", data)
         self.assertEqual(len(data['goals']), 0)
         
         ## Shows all (public and private) goals for current user
-        
+        setup.create_test_goals()
+        res = self.test_client.get("/goals/users/me/")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 20) # default count is 20
+        name_appendix = ord('a')
+        for goal in data['goals']:
+            self.assertFalse(goal['public']) # by default they're all private
+            self.assertTrue(goal['active']) # by default they're all active
+            self.assertEqual(goal['name'], "test goal " + chr(name_appendix)) # by default sort by name ASC
+            name_appendix = name_appendix + 1
+
+        public_goals = db.session.query(Goal).order_by(func.rand()).limit(15)
+        for goal in public_goals:
+            goal.update({"public": True})
+
+        res = self.test_client.get("/goals/users/me/")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 20) # default count is 20
+        name_appendix = ord('a')
+        is_public = False ## Test to make sure at least one is public
+        is_private = False # ditto private
+        for goal in data['goals']:
+            if (goal['public']): is_public = True
+            else: is_private = True
+            self.assertTrue(goal['active']) # by default they're all active
+            self.assertEqual(goal['name'], "test goal " + chr(name_appendix)) # by default sort by name ASC
+            name_appendix = name_appendix + 1
+
+        self.assertTrue(is_public)
+        self.assertTrue(is_private)
+
         ## Count works
+        res = self.test_client.get("/goals/users/me/?count=3")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 3) # default count is 20
+        name_appendix = chr(ord('a') - 1)
+        for goal in data['goals']:
+            self.assertTrue(goal['active']) # by default they're all active
+            new_appendix = goal['name'].replace("test goal ", "")
+            self.assertTrue(ord(new_appendix) > ord(name_appendix))
+            name_appendix = new_appendix
+
         
         ## Sort rejects invalid inputs
+        res = self.test_client.get("/goals/users/me/?sort=banana")
+        setup.assertBadData(self, res, "sort can only be one of")
 
-        ## Sort works
+        ## Sort works -- and it should always give active first, then inactive
+        active_goals = db.session.query(Goal).order_by(func.rand()).limit(15)
+        for goal in active_goals:
+            goal.update({"active": False})
+
+        res = self.test_client.get("/goals/users/me/?sort=created")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 20) # default count is 20
+        is_active = False
+        is_inactive = False
+        test_created = str(datetime.datetime(1970, 1, 1, 0, 0, 0))
+        for goal in data['goals']: 
+            if (goal['active']):
+                is_active = True
+            if (not goal['active']):
+                if (not is_inactive):
+                    test_created = str(datetime.datetime(1970, 1, 1, 0, 0, 0)) # reset the sort on the first inactive goal
+                is_inactive = True
+            self.assertTrue(goal['created'] > test_created)
+            test_created = goal['created']
+        self.assertTrue(is_active)
+        self.assertTrue(is_inactive)
         
         ## Sort order rejects invalid inputs
+        res = self.test_client.get("/goals/users/me/?sort_order=banana")
+        setup.assertBadData(self, res, "sort_order must be either")
 
         ## Sort_order works
+        res = self.test_client.get("/goals/users/me/?sort=created&sort_order=desc")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 20) # default count is 20
+        is_active = False
+        is_inactive = False
+        test_created = str(datetime.datetime(2100, 1, 1, 0, 0, 0))
+        for goal in data['goals']: 
+            if (goal['active']):
+                is_active = True
+            if (not goal['active']):
+                if (not is_inactive):
+                    test_created = str(datetime.datetime(2100, 1, 1, 0, 0, 0)) # reset the sort on the first inactive goal
+                is_inactive = True
+            self.assertTrue(goal['created'] < test_created)
+            test_created = goal['created']
+        self.assertTrue(is_active)
+        self.assertTrue(is_inactive)
         
         ## Offset works
+        min_name = db.session.query(Goal).filter_by(active=True).order_by(Goal.name).first().name
+        res = self.test_client.get("/goals/users/me/?offset=1")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 20) # default count is 20
+        self.assertTrue(data['goals'][0]['name'] > min_name)
+
         
         ## Count, sort, sort order, and offset all work together
-
+        max_created = db.session.query(Goal).filter_by(active=True).order_by(Goal.created.desc()).first().created
+        res = self.test_client.get("/goals/users/me/?offset=1&count=1&sort=created&sort_order=desc")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 1)
+        self.assertTrue(data['goals'][0]['created'] < str(max_created))
 
     def test_index(self):
         ## Requires login
@@ -253,27 +360,157 @@ class TestUserApi(unittest.TestCase):
         self.assertIn("goals", data)
         self.assertEqual(len(data['goals']), 0)
         
-        ## Only shows public goals for other users
-        
         ## Shows only public goals even for current user
+        setup.create_test_goals()
+        res = self.test_client.get("/goals/users/" + user_id + "/")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 0) # No public goals
         
+        public_goals = db.session.query(Goal).all()
+        for goal in public_goals:
+            goal.update({"public": True})
+
+        res = self.test_client.get("/goals/users/" + user_id + "/")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 20) # default count is 20
+        name_appendix = ord('a')
+        is_public = False ## Test to make sure at least one is public
+        is_private = False # none should be private
+        for goal in data['goals']:
+            if (goal['public']): is_public = True
+            else: is_private = True
+            self.assertTrue(goal['active']) # by default they're all active
+            self.assertEqual(goal['name'], "test goal " + chr(name_appendix)) # by default sort by name ASC
+            name_appendix = name_appendix + 1
+
+        self.assertTrue(is_public)
+        self.assertFalse(is_private)
+        
+        ## Only shows public goals for other users
+        self.logout()
+        self.login_other_user()
+        res = self.test_client.get("/goals/users/" + user_id + "/")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 20) # default count is 20
+        name_appendix = ord('a')
+        is_public = False ## Test to make sure at least one is public
+        is_private = False # none should be private
+        for goal in data['goals']:
+            if (goal['public']): is_public = True
+            else: is_private = True
+            self.assertTrue(goal['active']) # by default they're all active
+            self.assertEqual(goal['name'], "test goal " + chr(name_appendix)) # by default sort by name ASC
+            name_appendix = name_appendix + 1
+
+        self.assertTrue(is_public)
+        self.assertFalse(is_private)
+
+        public_goals = db.session.query(Goal).all()
+        for goal in public_goals:
+            goal.update({"public": False})
+
+        res = self.test_client.get("/goals/users/" + user_id + "/")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 0) # No public goals
+            
         ## Count works
+        public_goals = db.session.query(Goal).all()
+        for goal in public_goals:
+            goal.update({"public": True})
+
+        res = self.test_client.get("/goals/users/" + user_id + "/?count=3")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 3) # default count is 20
+        name_appendix = chr(ord('a') - 1)
+        for goal in data['goals']:
+            self.assertTrue(goal['active']) # by default they're all active
+            new_appendix = goal['name'].replace("test goal ", "")
+            self.assertTrue(ord(new_appendix) > ord(name_appendix))
+            name_appendix = new_appendix
         
         ## Sort rejects invalid inputs
+        res = self.test_client.get("/goals/users/" + user_id + "/?sort=banana")
+        setup.assertBadData(self, res, "sort can only be one of")
 
         ## Sort works
+        ## Sort works -- and it should always give active first, then inactive
+        active_goals = db.session.query(Goal).order_by(func.rand()).limit(15)
+        for goal in active_goals:
+            goal.update({"active": False})
+
+        res = self.test_client.get("/goals/users/" + user_id + "/?sort=created")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 20) # default count is 20
+        is_active = False
+        is_inactive = False
+        test_created = str(datetime.datetime(1970, 1, 1, 0, 0, 0))
+        for goal in data['goals']: 
+            if (goal['active']):
+                is_active = True
+            if (not goal['active']):
+                if (not is_inactive):
+                    test_created = str(datetime.datetime(1970, 1, 1, 0, 0, 0)) # reset the sort on the first inactive goal
+                is_inactive = True
+            self.assertTrue(goal['created'] > test_created)
+            test_created = goal['created']
+        self.assertTrue(is_active)
+        self.assertTrue(is_inactive)
         
         ## Sort order rejects invalid inputs
+        res = self.test_client.get("/goals/users/" + user_id + "/?sort_order=banana")
+        setup.assertBadData(self, res, "sort_order must be either")
 
         ## Sort_order works
+        res = self.test_client.get("/goals/users/" + user_id + "/?sort=created&sort_order=desc")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 20) # default count is 20
+        is_active = False
+        is_inactive = False
+        test_created = str(datetime.datetime(2100, 1, 1, 0, 0, 0))
+        for goal in data['goals']: 
+            if (goal['active']):
+                is_active = True
+            if (not goal['active']):
+                if (not is_inactive):
+                    test_created = str(datetime.datetime(2100, 1, 1, 0, 0, 0)) # reset the sort on the first inactive goal
+                is_inactive = True
+            self.assertTrue(goal['created'] < test_created)
+            test_created = goal['created']
+        self.assertTrue(is_active)
+        self.assertTrue(is_inactive)
         
         ## Offset works
+        min_name = db.session.query(Goal).filter_by(active=True).order_by(Goal.name).first().name
+        res = self.test_client.get("/goals/users/" + user_id + "/?offset=1")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 20) # default count is 20
+        self.assertTrue(data['goals'][0]['name'] > min_name)
         
         ## Count, sort, sort order, and offset all work together
-        
+        max_created = db.session.query(Goal).filter_by(active=True).order_by(Goal.created.desc()).first().created
+        res = self.test_client.get("/goals/users/" + user_id + "/?offset=1&count=1&sort=created&sort_order=desc")
+        setup.assertOk(self, res)
+        data = json.loads(res.data)
+        self.assertIn("goals", data)
+        self.assertEqual(len(data['goals']), 1)
+        self.assertTrue(data['goals'][0]['created'] < str(max_created))
 
-
-        
 
     def create_test_goal(self):
         res = self.test_client.post("/goals/create/", data=self.new_goal)
@@ -282,7 +519,8 @@ class TestUserApi(unittest.TestCase):
         return json.loads(res.data)
 
 
-        
+if __name__ == '__main__':
+    unittest.main()        
         
 
 

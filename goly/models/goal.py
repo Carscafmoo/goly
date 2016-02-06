@@ -7,12 +7,6 @@ import datetime
 import json
 from goly.models.user import User
 import werkzeug.local
-"""
-@TODO: Test
-@TODO: Add pretty much all functionality
-@TODO: Add prompt
-
-"""
 md = MetaData(bind=db.engine)
 goal = Table('goal', md, autoload=True)
 Base = declarative_base(metadata=md)
@@ -141,7 +135,7 @@ class Goal(Base, db.Model):
 
             setattr(self, key, data[key])
 
-        if (self.exists()):
+        if (self.exists()): 
             db.session.add(self)
             db.session.flush()
             db.session.commit()
@@ -160,21 +154,25 @@ class Goal(Base, db.Model):
         if (sort_order == 'desc'): order_by = order_by.desc()
 
         if (public_only):
-            return self.query.filter_by(user=user).filter_by(public=True).order_by(order_by).limit(count).offset(offset).all()
-        
-        return self.query.filter_by(user=user).order_by(order_by).limit(count).offset(offset).all()
+            goals = db.session.query(self).filter_by(user=user).filter_by(public=True).order_by(Goal.active.desc(), order_by).limit(count).offset(offset).all()
+        else: 
+            goals = db.session.query(self).filter_by(user=user).order_by(Goal.active.desc(), order_by).limit(count).offset(offset).all()
+
+        db.session.commit() ## Don't understand why I need to commit here?
+
+        return goals
 
     @classmethod
     def pull_by_id(self, id):
-        return self.query.filter_by(id=id).first()
+        return db.session.query(self).filter_by(id=id).first()
 
     @classmethod
     def pull_by_name(self, user, name):
-        return self.query.filter_by(user=user).filter_by(name=name).first()
+        return db.session.query(self).filter_by(user=user).filter_by(name=name).first()
 
     @classmethod
     def delete(self, user, id):
-        goal = self.query.filter_by(id=id).first()
+        goal = db.session.query(self).filter_by(id=id).first()
         if (not goal): 
             raise errors.NotFoundError()
 

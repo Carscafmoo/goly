@@ -24,6 +24,7 @@ def create_test_users():
         new_user.registered = new_user.registered_on - datetime.timedelta(hours=30-(ord(x)-ord('a')))
         db.session.add(new_user)
 
+    db.session.flush()
     db.session.commit()
 
 def create_test_user():
@@ -50,13 +51,13 @@ def create_other_user():
 
 def create_test_goals():
     user = create_test_user()
-    for x in range(ord('a'), ord('a') + 26):
+    for x in range(ord('a'), ord('a') + 25):
         x = chr(x)
         name = "test goal " + str(x)
         new_goal = Goal(user, name, "Is this a test?", "daily", 10, "numeric")
-        new_goal.registered = new_goal.created - datetime.timedelta(hours=30-(ord(x)-ord('a')))
+        new_goal.created = new_goal.created - datetime.timedelta(hours=30-(ord(x)-ord('a')))
         db.session.add(new_goal)
-
+    db.session.flush()
     db.session.commit()
 
 def assertInvalidCredentials(test, res):

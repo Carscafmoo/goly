@@ -40,7 +40,7 @@ def update_goal():
 
     return empty_ok()
 
-@app.route("/goals/users/me", methods=['GET'])
+@app.route("/goals/users/me/", methods=['GET'])
 @login_required
 def get_my_goals():
     """Return all goals (public and private) for the current user"""
