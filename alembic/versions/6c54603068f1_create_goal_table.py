@@ -17,13 +17,21 @@ import sqlalchemy as sa
 
 
 def upgrade():
+    tf = op.create_table('frequency', 
+        sa.Column('id', sa.Integer, primary_key=True),
+        sa.Column('name', sa.String(50), nullable=False, unique=True))
+    op.bulk_insert(tf, [{'name': 'daily'}, 
+                        {'name': 'weekly'}, 
+                        {'name': 'monthly'},
+                        {'name': 'quarterly'},
+                        {'name': 'yearly'}])
     op.create_table(
         'goal',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('user', sa.Integer, sa.ForeignKey("user.id", onupdate="CASCADE"), nullable=False),
         sa.Column('name', sa.String(50), nullable=False, index=True),
         sa.Column('prompt', sa.String(255), nullable=False, index=False),
-        sa.Column('frequency', sa.Enum('daily', 'weekly', 'monthly', 'quarterly', 'yearly'), nullable=False),
+        sa.Column('frequency', sa.Integer, sa.ForeignKey("frequency.id", onupdate="CASCADE"), nullable=False),
         sa.Column('check_in_frequency', sa.Enum('daily', 'weekly', 'monthly', 'weekdays', 'weekends'), nullable=False),
         sa.Column('target', sa.Integer, nullable=False),
         sa.Column('input_type', sa.Enum('binary', 'numeric'), nullable=False),
@@ -36,3 +44,4 @@ def upgrade():
 
 def downgrade():
     op.drop_table('goal')
+    op.drop_table('frequency')

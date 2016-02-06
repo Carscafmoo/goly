@@ -6,6 +6,7 @@ from sqlalchemy.orm import validates
 import datetime
 import json
 from goly.models.user import User
+from goly.models.frequency import Frequency
 import werkzeug.local
 md = MetaData(bind=db.engine)
 goal = Table('goal', md, autoload=True)
@@ -60,8 +61,8 @@ class Goal(Base, db.Model):
     @validates("frequency")
     def validate_frequency(self, key, freq):
         freq = freq.strip()
-        assert freq in ['daily', 'weekly', 'monthly', 'quarterly', 'yearly'], "Frequency must be one of daily, weekly, monthly, quarterly, or even yearly"
-
+        freq = Frequency.get_id_by_name(freq) ## Assertion exists here
+        
         return freq
 
     @validates("target")
@@ -105,7 +106,7 @@ class Goal(Base, db.Model):
             "user": self.user,
             "name": self.name,
             "prompt": self.prompt,
-            "frequency": self.frequency,
+            "frequency": Frequency.get_name_by_id(self.frequency),
             "check_in_frequency": self.check_in_frequency,
             "target": self.target,
             "input_type": self.input_type,

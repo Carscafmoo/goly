@@ -3,6 +3,7 @@ import unittest
 from goly import app, db
 from goly.models.user import User
 from goly.models.goal import Goal
+from goly.models.frequency import Frequency
 from sqlalchemy import func
 import json
 import datetime
@@ -79,7 +80,10 @@ class TestUserApi(unittest.TestCase):
         self.assertIsNotNone(goal)
         for key, val in self.new_goal.iteritems():
             self.assertEqual(val, data[key])
-            self.assertEqual(val, getattr(goal, key))
+            if (key == 'frequency'):
+                self.assertEqual(val, Frequency.get_name_by_id(getattr(goal, key)))
+            else:
+                self.assertEqual(val, getattr(goal, key))
 
         ## Shouldn't be able to register something that already exists
         res = self.test_client.post("/goals/create/", data=self.new_goal)
@@ -148,7 +152,10 @@ class TestUserApi(unittest.TestCase):
 
         updated_goal = Goal.pull_by_id(goal['id'])
         for key, val in data.iteritems():
-            self.assertEqual(getattr(updated_goal, key), val)
+            if (key == 'frequency'):
+                self.assertEqual(Frequency.get_name_by_id(getattr(updated_goal, key)), val)
+            else:
+                self.assertEqual(getattr(updated_goal, key), val)
 
         ## If any part is invalid, no part should go through
         bad_data = {'id': goal['id']}
@@ -165,7 +172,10 @@ class TestUserApi(unittest.TestCase):
         setup.assertBadData(self, res, "Public must be a boolean")
         updated_goal = Goal.pull_by_id(goal['id'])
         for key, val in data.iteritems():
-            self.assertEqual(getattr(updated_goal, key), val)
+            if (key == 'frequency'):
+                self.assertEqual(Frequency.get_name_by_id(getattr(updated_goal, key)), val)
+            else:
+                self.assertEqual(getattr(updated_goal, key), val)
 
         
         ## Can't update someone else's goal
