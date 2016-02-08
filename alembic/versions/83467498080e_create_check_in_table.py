@@ -1,4 +1,4 @@
-"""Create goal instance table
+"""Create check-in table
 
 Revision ID: 83467498080e
 Revises: 6c54603068f1
@@ -25,7 +25,7 @@ def upgrade():
         sa.UniqueConstraint('start', 'end', name='uniq_tf'))
 
     op.create_table(
-        'goal_instance',
+        'check_in',
         sa.Column('id', sa.Integer, primary_key=True),
         sa.Column('goal', sa.Integer, sa.ForeignKey("goal.id", onupdate="CASCADE"), nullable=False),
         sa.Column('timeframe', sa.Integer, sa.ForeignKey("timeframe.id", onupdate="CASCADE"), nullable=False),
@@ -36,5 +36,5 @@ def upgrade():
 
 
 def downgrade():
-    op.drop_table('goal_instance')
+    op.drop_table('check_in')
     op.drop_table('timeframe')

@@ -1,6 +1,6 @@
 """This package defines the goal class for goly, including ORM nonsense"""
 from goly import db, errors
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, orm
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import validates
 import datetime
@@ -27,6 +27,10 @@ class Goal(Base, db.Model):
         self.public = False
         self.created = datetime.datetime.now()
 
+    @orm.reconstructor
+    def reconstruct(self):
+        self.frequency_name = Frequency.get_name_by_id(self.frequency)
+        self.check_in_frequency_name = Frequency.get_name_by_id(self.check_in_frequency)
 
     def get_id(self):
         if (not self.id):
@@ -58,12 +62,22 @@ class Goal(Base, db.Model):
 
         return prompt
 
-    @validates("frequency")
+    @validates("frequency", "check_in_frequency")
     def validate_frequency(self, key, freq):
         freq = freq.strip()
-        freq = Frequency.get_id_by_name(freq) ## Assertion exists here
-        
-        return freq
+        freq_id = Frequency.get_id_by_name(freq, key) ## Assertion exists here
+
+        if (key == 'frequency'): 
+            if (self.check_in_frequency and self.check_in_frequency_name):
+                assert Frequency.conforms(freq, self.check_in_frequency_name), "Check-in frequency must conform to frequency!"
+            self.frequency_name = freq
+        elif (key == 'check_in_frequency'):
+            if (self.frequency and self.frequency_name):
+                assert Frequency.conforms(self.frequency_name, freq), "Check-in frequency must conform to frequency!"
+            self.check_in_frequency_name = freq
+
+    
+        return freq_id
 
     @validates("target")
     def validate_target(self, key, target):
@@ -76,12 +90,6 @@ class Goal(Base, db.Model):
         assert it in ['binary', 'numeric'], "Input type must be binary or numeric"
 
         return it
-
-    @validates("check_in_frequency")
-    def validate_check_in_frequency(self, key, freq):
-        assert freq in ['daily', 'weekly', 'monthly', 'weekdays', 'weekends'], "Check-in frequency must be one of 'daily', 'weekly', 'monthly', 'weekdays', 'weekends'"
-
-        return freq
 
     def validate_boolean(self, boo, name):
         if (isinstance(boo, basestring)):
@@ -101,13 +109,13 @@ class Goal(Base, db.Model):
         return self.validate_boolean(public, "Public")
 
     def to_dict(self):
-        return { 
+        return {
             "id": self.get_id(),
             "user": self.user,
             "name": self.name,
             "prompt": self.prompt,
-            "frequency": Frequency.get_name_by_id(self.frequency),
-            "check_in_frequency": self.check_in_frequency,
+            "frequency": self.frequency_name,
+            "check_in_frequency": self.check_in_frequency_name,
             "target": self.target,
             "input_type": self.input_type,
             "active": self.active,
@@ -137,11 +145,15 @@ class Goal(Base, db.Model):
 
     def update(self, data):
         fields = set(['name', 'prompt', 'frequency', 'check_in_frequency', 'target', 'input_type', 'active', 'public']) & set(data.keys())
+        ## If updating both cif and f, unset the cache so that you can re-validate their conformity
+        if ('check_in_frequency' in fields and 'frequency' in fields):
+            self.frequency_name = None
+            self.check_in_frequency_name = None
+
         for key in fields:
             if (key == 'name'):
                 if (self.pull_by_name(self.user, data[key])):
-                    raise ResourceAlreadyExistsError("goal", self.name)
-
+                    raise errors.ResourceAlreadyExistsError("goal", data[key])
             setattr(self, key, data[key])
 
         if (self.exists()): 

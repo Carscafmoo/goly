@@ -205,12 +205,12 @@ Requires login
 Accepts:
 - name: A (short) name to display for the goal, e.g., "Friend Call"
 - prompt: A prompt (question) to answer, e.g., "Did you call a friend today?"
-- frequency: The frequency with which this task should be performed -- one of "daily", "weekly", "monthly", "quarerly", or "yearly"
+- frequency: The frequency with which this task should be performed -- one of "daily", "weekly", "monthly", "quarterly", or "yearly"
 - target: The target number of times within the frequency range to perform the task (e.g., 1 [friend call per day] or 5 [workouts per week]) 
 - input_type: Either "numeric" or "binary."  
   - Numeric: Enter a number to indicate the number of times you performed the task (e.g., if your goal is to practice guitar 180 minutes / week, your prompt might be "How many minutes of guitar did you practice today?" and your answer might be 45.
   - Binary: A yes / no action.  (e.g., if your goal is to call a friend every day, your prompt might be "Did you call a friend today" and your answer might be "Yes.")
-- check_in_frequency: The frequency with which to check in on the goal (i.e., receive push notifications).  One of 'daily', 'weekly', 'monthly', 'weekdays', 'weeekends'
+- check_in_frequency: The frequency with which to check in on the goal (i.e., receive push notifications).  Check-in frequency must be one of the options for frequency, and likewise must be conformant (i.e., if "frequency" is "monthly", check-in frequency must be daily, not weekly (since weeks and months don't divide evenly) or yearly (since years are shorter than months))
 
 Returns:  
 - status code: 201
@@ -220,7 +220,7 @@ Returns:
   - name: The name of the goal
   - prompt: The goal's prompt
   - frequency: The goal's frequency
-  - check_in_frequency: The frequency with which to check-in on this goal
+  - check_in_frequency: The frequency with which to check-in on this goal; this is also the unit provided in detail reports
   - target: The numerical target of the goal
   - input_type: The input type of the goal
   - active: Whether the goal is currently active (Default: true)
@@ -258,7 +258,7 @@ Accepts:
 - name (optional): A new (short) name to display for the goal, e.g., "Friend Call". Must be unique.
 - prompt (optional): A new prompt (question) to answer, e.g., "Did you call a friend today?"
 - frequency (optional): The new frequency with which this task should be performed -- one of "daily", "weekly", "monthly", "quarerly", or "yearly"
-- check_in_frequency (otpional): The new frequency with which to check in on this task; one of "daily", "weekly", "monthly", "weekends", "weekdays"
+- check_in_frequency (otpional): The new frequency with which to check in on this task; same options as "frequency"
 - target (optional): The new target number of times within the frequency range to perform the task (e.g., 1 [friend call per day] or 5 [workouts per week]) 
 - input_type (optional): Either "numeric" or "binary."  
   - Numeric: Enter a number to indicate the number of times you performed the task (e.g., if your goal is to practice guitar 180 minutes / week, your prompt might be "How many minutes of guitar did you practice today?" and your answer might be 45.

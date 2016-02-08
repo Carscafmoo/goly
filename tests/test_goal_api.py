@@ -80,7 +80,7 @@ class TestUserApi(unittest.TestCase):
         self.assertIsNotNone(goal)
         for key, val in self.new_goal.iteritems():
             self.assertEqual(val, data[key])
-            if (key == 'frequency'):
+            if (key == 'frequency' or key == 'check_in_frequency'):
                 self.assertEqual(val, Frequency.get_name_by_id(getattr(goal, key)))
             else:
                 self.assertEqual(val, getattr(goal, key))
@@ -152,7 +152,7 @@ class TestUserApi(unittest.TestCase):
 
         updated_goal = Goal.pull_by_id(goal['id'])
         for key, val in data.iteritems():
-            if (key == 'frequency'):
+            if (key == 'frequency' or key == 'check_in_frequency'):
                 self.assertEqual(Frequency.get_name_by_id(getattr(updated_goal, key)), val)
             else:
                 self.assertEqual(getattr(updated_goal, key), val)
@@ -172,7 +172,7 @@ class TestUserApi(unittest.TestCase):
         setup.assertBadData(self, res, "Public must be a boolean")
         updated_goal = Goal.pull_by_id(goal['id'])
         for key, val in data.iteritems():
-            if (key == 'frequency'):
+            if (key == 'frequency' or key == 'check_in_frequency'):
                 self.assertEqual(Frequency.get_name_by_id(getattr(updated_goal, key)), val)
             else:
                 self.assertEqual(getattr(updated_goal, key), val)

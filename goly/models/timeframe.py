@@ -1,6 +1,6 @@
 """This package defines the timeframe class for goly, including ORM nonsense"""
 from goly import db, errors
-from sqlalchemy import MetaData, Table
+from sqlalchemy import MetaData, Table, orm
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import validates
 import datetime
@@ -18,6 +18,10 @@ class Timeframe(Base, db.Model):
         self.start = start
         ## We go up to, but no including, the end. i.e., a time falls within a timeframe if time is in [start, end)
         self.end = self._calculate_end() 
+
+    @orm.reconstructor
+    def reconstruct(self):
+        self.frequency_name = Frequency.get_name_by_id(self.frequency)
 
     @validates("frequency")
     def validate_frequency(self, key, freq):
