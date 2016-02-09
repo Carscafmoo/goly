@@ -6,6 +6,12 @@ import datetime
 import dateutil.relativedelta
 
 class TestTimeframe(unittest.TestCase):
+    def startUp(self):
+        Timeframe.query.delete()
+
+    def tearDown(self):
+        Timeframe.query.delete()
+
     def test_init(self):
         ## Should fail if bogus frequency is specified
         with self.assertRaisesRegexp(AssertionError, "Frequency must be one of"):
@@ -115,7 +121,7 @@ class TestTimeframe(unittest.TestCase):
             Timeframe.get_timeframes("yearly", datetime.datetime(2016, 1, 2), datetime.datetime(2016, 1, 1))
 
         start = datetime.datetime(2016, 1, 1)
-        end = datetime.datetime(2016, 12, 31, 23, 59, 59, 99999)
+        end = datetime.datetime(2017, 1, 1) ## Should not include intervals starting on this date / time
 
         tfs = Timeframe.get_timeframes("daily", start, end)
         self.assertEqual(len(tfs), 366)
@@ -152,6 +158,112 @@ class TestTimeframe(unittest.TestCase):
             self.assertEqual(x.start.month, 1)
             self.assertEqual(x.end.month, 1)
             self.assertEqual(x.frequency_name, "yearly")
+
+        end = datetime.datetime(2017, 1, 1, 1) ## Should include intervals starting on this date
+
+        tfs = Timeframe.get_timeframes("daily", start, end)
+        self.assertEqual(len(tfs), 367)
+        for x in tfs:
+            self.assertEqual(x.frequency_name, "daily")
+
+        tfs = Timeframe.get_timeframes("monthly", start, end)
+        self.assertEqual(len(tfs), 13)
+        for x in tfs:
+            self.assertEqual(x.start.day, 1)
+            self.assertEqual(x.end.day, 1)
+            self.assertEqual(x.frequency_name, "monthly")
+
+        tfs = Timeframe.get_timeframes("quarterly", start, end)
+        self.assertEqual(len(tfs), 5)
+        for x in tfs:
+            self.assertEqual(x.start.day, 1)
+            self.assertEqual(x.end.day, 1)
+            self.assertEqual(x.start.month % 3, 1)
+            self.assertEqual(x.end.month % 3, 1)
+            self.assertEqual(x.frequency_name, "quarterly")
+
+    def test_sub_timeframes(self):
+        tf = Timeframe.get_timeframe("yearly", datetime.datetime(2016, 1, 1))
+        tfs = tf.sub_timeframes("daily")
+        start = tf.start
+        self.assertEqual(len(tfs), 366)
+        for x in tfs:
+            self.assertEqual(start, x.start)
+            start = start + datetime.timedelta(1)
+
+    def test_persist(self):
+        ## Test that data persists to the database
+        tf = Timeframe("yearly", datetime.datetime(2016, 1, 1))
+        tf.persist()
+        self.assertTrue(tf.exists())
+
+        check_tf = Timeframe.pull_by_start_end(tf.start, tf.end).to_dict()
+        for key, val in tf.to_dict().iteritems():
+            self.assertEqual(check_tf[key], val)
+
+        ## Test that you can persist the same one twice without duplicate key, etc errors
+        tf.persist()
+
+    def test_pull_by_start_end(self):
+        ## Pulling by start / end should return None if none exists:
+        self.assertIsNone(Timeframe.pull_by_start_end(datetime.datetime(2016, 1, 1), datetime.datetime(2017, 1, 1)))
+        tf = Timeframe("yearly", datetime.datetime(2016, 1, 1))
+        tf.persist()
+        self.assertTrue(tf.exists())
+
+        check_tf = Timeframe.pull_by_start_end(tf.start, tf.end).to_dict()
+        for key, val in tf.to_dict().iteritems():
+            self.assertEqual(check_tf[key], val)
+
+        ## Should *not* pull if the start is right and end is wrong or vice versa:
+        self.assertIsNone(Timeframe.pull_by_start_end(tf.start, datetime.datetime(2016, 2, 1)))
+        self.assertIsNone(Timeframe.pull_by_start_end(datetime.datetime(2016, 2, 1), tf.end))
+
+
+    def test_pull_by_id(self):
+        ## Test that a timeframe that exists can be pulled by ID
+        self.assertIsNone(Timeframe.pull_by_id(0))
+        
+        tf = Timeframe("yearly", datetime.datetime(2016, 1, 1))
+        tf.persist()
+        self.assertTrue(tf.exists())
+
+        check_tf = Timeframe.pull_by_id(tf.get_id()).to_dict()
+        for key, val in tf.to_dict().iteritems():
+            self.assertEqual(check_tf[key], val)
+
+    def test_get_id(self):
+        ## Test that a Timeframe that has just been persisted returns an ID
+        tf = Timeframe("yearly", datetime.datetime(2016, 1, 1))
+        tf.persist()
+        self.assertIsNotNone(tf.get_id())
+        
+        ## Test that a timeframe pulled by id returns same id
+        check_tf = Timeframe.pull_by_id(tf.get_id())
+        self.assertEqual(check_tf.get_id(), tf.get_id())
+
+        ## Test that a timeframe created by start / end persistes, then returns an ID
+        tf = Timeframe("monthly", datetime.datetime(2016, 1, 1))
+        self.assertIsNotNone(tf.get_id())
+        self.assertTrue(tf.exists())
+        self.assertNotEqual(tf.get_id(), check_tf.get_id())
+        
+        ## Test that a timeframe pulled by start / end returns an ID
+        check_tf = Timeframe.pull_by_start_end(tf.start, tf.end)
+        self.assertEqual(check_tf.get_id(), tf.get_id())
+
+    def test_exists(self):
+        tf = Timeframe("yearly", datetime.datetime(2016, 1, 1))
+        self.assertFalse(tf.exists())
+        tf.persist()
+        self.assertTrue(tf.exists())
+
+    
+
+    
+
+
+
 
     
 

@@ -42,6 +42,40 @@ class Timeframe(Base, db.Model):
 
         return start
 
+    def get_id(self):
+        if (self.id): return self.id
+        tf = self.pull_by_start_end(self.start, self.end)
+        if (tf): 
+            self.id = tf.get_id()
+            return self.id
+
+        self.persist()
+
+        return self.get_id()
+    
+    def exists(self):
+        if self.pull_by_start_end(self.start, self.end):
+            return True
+
+        return False
+
+    def persist(self):
+        """We don't error if we already exist; we just keep on truckin"""
+        if (not self.exists()):
+            db.session.add(self)
+            db.session.commit()
+
+    @classmethod
+    def pull_by_id(self, id):
+        return db.session.query(self).filter_by(id=id).first()
+
+    @classmethod
+    def pull_by_start_end(self, start, end):
+        return db.session.query(self).filter_by(start=start).filter_by(end=end).first()
+
+    def sub_timeframes(self, sub_frequency):
+        return self.get_timeframes(sub_frequency, self.start, self.end)
+
     def _calculate_end(self):
         freq = self.frequency_name
         if (freq == 'daily'): return self.start + datetime.timedelta(1)
@@ -88,16 +122,20 @@ class Timeframe(Base, db.Model):
 
     @classmethod
     def get_timeframes(self, frequency, start, end):
-        """Return an array of all timeframes between start and end, including the timeframes that include star and end"""
+        """Return an array of all timeframes between start and end
+
+        Includes start and end.  
+        Note that a timeframe starting on the end time does not technically include the end time, so it is not included.
+        Spillover is included (e.g., a monthly timeframe starting on a Tuesday and ending on a Wednesday
+        would return the full beginning week and full end week if chopped weekly)
+        """
         assert end >= start, "End must be after start."
         
         tfs = []
         tf = self.get_timeframe(frequency, start)
-        while tf.end <= end:
+        while tf.start < end:
             tfs.append(tf)
             tf = Timeframe(frequency, tf._calculate_end())
-
-        tfs.append(tf)
 
         return tfs
 
