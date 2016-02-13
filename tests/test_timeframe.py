@@ -258,16 +258,6 @@ class TestTimeframe(unittest.TestCase):
         tf.persist()
         self.assertTrue(tf.exists())
 
-    
-
-    
-
-
-
-
-    
-
-
 
 if __name__ == '__main__':
     unittest.main()

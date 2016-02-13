@@ -16,9 +16,7 @@ class Timeframe(Base, db.Model):
     def __init__(self, frequency, start):
         self.frequency = frequency
         self.start = start
-        ## We go up to, but no including, the end. i.e., a time falls within a timeframe if time is in [start, end)
-        self.end = self._calculate_end() 
-
+        
     @orm.reconstructor
     def reconstruct(self):
         self.frequency_name = Frequency.get_name_by_id(self.frequency)
@@ -39,6 +37,9 @@ class Timeframe(Base, db.Model):
         elif (self.frequency_name == 'monthly'): assert start.day == 1, "Monthly timeframes must begin on the first of the month"
         elif (self.frequency_name == 'quarterly'): assert start.day == start.month % 3 == 1, "Quarterly timeframes must begin on January, April, July, or October 1"
         elif (self.frequency_name == 'yearly'): assert start.day == start.month == 1, "Yearly timeframes must begin on Jan 1"
+
+        ## We go up to, but no including, the end. i.e., a time falls within a timeframe if time is in [start, end)
+        self.end = self._calculate_end(start) 
 
         return start
 
@@ -76,13 +77,15 @@ class Timeframe(Base, db.Model):
     def sub_timeframes(self, sub_frequency):
         return self.get_timeframes(sub_frequency, self.start, self.end)
 
-    def _calculate_end(self):
+    def _calculate_end(self, start=None):
+        if (start is None): start = self.start
+        
         freq = self.frequency_name
-        if (freq == 'daily'): return self.start + datetime.timedelta(1)
-        if (freq == 'weekly'): return self.start + datetime.timedelta(7)
-        if (freq == 'monthly'): return self.start + dateutil.relativedelta.relativedelta(months=+1)
-        if (freq == 'quarterly'): return self.start + dateutil.relativedelta.relativedelta(months=+3)
-        if (freq == 'yearly'): return self.start + dateutil.relativedelta.relativedelta(years=+1)
+        if (freq == 'daily'): return start + datetime.timedelta(1)
+        if (freq == 'weekly'): return start + datetime.timedelta(7)
+        if (freq == 'monthly'): return start + dateutil.relativedelta.relativedelta(months=+1)
+        if (freq == 'quarterly'): return start + dateutil.relativedelta.relativedelta(months=+3)
+        if (freq == 'yearly'): return start + dateutil.relativedelta.relativedelta(years=+1)
 
     def to_dict(self):
         return {
@@ -97,7 +100,6 @@ class Timeframe(Base, db.Model):
         
         return datetime.datetime(time.year, time.month, time.day)
             
-
     @classmethod
     def get_timeframe(self, frequency, time):
         """Return the timeframe at a given time, given the timeframe frequency

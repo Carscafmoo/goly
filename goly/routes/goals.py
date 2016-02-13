@@ -1,11 +1,10 @@
-from flask_api.exceptions import AuthenticationFailed
 from flask_api.status import HTTP_200_OK
 from goly import app, db
 from flask_login import login_user, logout_user, current_user, login_required
-from flask import request, g, jsonify
+from flask import request, jsonify
 from goly.models.goal import Goal
 from goly.models.user import User
-from goly.errors import InvalidRequest, NotFoundError, UnauthorizedError
+from goly.errors import NotFoundError, UnauthorizedError
 from goly.routes import validate_form, empty_ok, validate_sort
 
 

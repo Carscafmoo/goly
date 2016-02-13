@@ -11,3 +11,4 @@ db = SQLAlchemy(app)
 
 import goly.routes.users
 import goly.routes.goals
+import goly.routes.check_ins

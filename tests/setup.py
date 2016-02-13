@@ -2,12 +2,14 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.realpath(__file__))))
 import datetime
-from goly import db
+from goly import app, db
 from goly.models.user import User
 from goly.models.goal import Goal
 import copy
 import json
 
+
+test_client = app.test_client()
 test_user_pass = "test-pass"
 test_user_name = "test@example.com"
 test_user = User(test_user_name, test_user_pass, "first", "last")
@@ -15,6 +17,20 @@ test_user = User(test_user_name, test_user_pass, "first", "last")
 other_user_name = "otheruser@exmaple.com"
 other_user_pass = "test-pass"
 other_user = User(other_user_name, other_user_pass, "other", "user")
+
+def login_test_user():
+    create_test_user()
+    res = test_client.post("/login/", data={"email": test_user_name, "password": test_user_pass})
+    return res 
+
+def logout():
+    res = test_client.post("/logout/")
+    return res
+
+def login_other_user():
+    create_other_user()
+    res = test_client.post("/login/", data={"email": other_user_name, "password": other_user_pass})
+    return res 
 
 def create_test_users():
     for x in range(ord('a'), ord('a') + 26):

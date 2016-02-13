@@ -8,8 +8,8 @@ from sqlalchemy import func
 import json
 import datetime
 
-class TestUserApi(unittest.TestCase):
-    test_client = app.test_client()
+class TestGoalApi(unittest.TestCase):
+    test_client = setup.test_client
     new_goal = {"name": "Test goal", 
                 "prompt": "How many new goals did you create today?", 
                 "frequency": "daily", 
@@ -38,19 +38,14 @@ class TestUserApi(unittest.TestCase):
         db.session.query(Goal).delete()
         db.session.commit()
 
-
     def login(self):        
-        res = self.test_client.post("/login/", data={"email": setup.test_user_name, "password": setup.test_user_pass})
-        setup.assertOk(self, res, 201)
+        return setup.assertOk(self, setup.login_test_user(), 201)
 
     def logout(self):
-        res = self.test_client.post("/logout/")
-        setup.assertOk(self, res, 204)
+        return setup.assertOk(self, setup.logout(), 204)
 
     def login_other_user(self):
-        setup.create_other_user()
-        res = self.test_client.post("/login/", data={"email": setup.other_user_name, "password": setup.other_user_pass})
-        setup.assertOk(self, res, 201)
+        return setup.assertOk(self, setup.login_other_user(), 201)
 
     def test_create(self):
         # Requires login:
