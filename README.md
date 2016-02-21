@@ -15,7 +15,7 @@ Each response will include a `status_code` and a `data` attribute.
 
 Errors will return an HTTP status code in the 400 range. The response for an error will include a `detail` attribute in the returned data, with information about the error.
 
-OK responses will include a `status_code` in the 200 range.  The resulting `data` attribute will depend on the endpoint in question; each is described below.  Note that array data is always returned as an attribute pointing to an array; this is due to a somewhat obscure security concern detailed [here](http://flask.pocoo.org/docs/0.10/security/#json-security).  Empty return values are provided as empty objects, so it is always save to JSON decode the `data` attribute of a response.
+OK responses will include a `status_code` in the 200 range.  The resulting `data` attribute will depend on the endpoint in question; each is described below.  Note that array data is always returned as an attribute pointing to an array; this is due to a somewhat obscure security concern detailed [here](http://flask.pocoo.org/docs/0.10/security/#json-security).  Empty return values are provided as empty objects, so it is always safe to JSON decode the `data` attribute of a response.
 
 User API
 ----
@@ -138,7 +138,7 @@ Purpose: Get the current user's information
 Requires login  
 Returns:
  - status code: 200
- - data: same as returned by /users/[id]
+ - data: same as returned by /users/[id]/
 
 Errors:
 - Status code 401: You must login
@@ -329,7 +329,97 @@ Returns:
 Errors:
 - Status code 400: Invalid request
 - Status code 401: You must login
+ 
+Check-in API
+----
+**/goals/[id]/check-ins/**  
+Methods: POST  
+Purpose: Create a new check-in or update an existing one
+Requires login  
+Accepts:
+- value: The value of the check-in.  For numeric goals, this must be numeric; likewise, for binary goals, this must be one of "True" or "False"
+- timeframe: Optional; the ID of a timeframe whose check-in to update or create; if not specified, assumes the current timeframe.
 
+Returns:
+- status code: 201 if the check-in is created or 200 if an existing check-in is updated
+- data:
+  - id: The id of the newly-created or updated check-in
+  - goal: The id of the goal
+  - timeframe: A representation of the timeframe, with fields
+    - id: the id of the timeframe
+    - frequency: The frequency of the timeframe; should match check-in frequency
+    - Start: The start of the timeframe for which this check-in applies, in format YYYY-MM-DD HH:mm:ss (e.g., 2016-01-01 00:00:00)
+    - End: The end of the timeframe for which this check-in applies, in format YYYY-MM-DD HH:mm:ss (e.g., 2016-01-01 00:00:00); timeframe does *not* include its end.
+  - value: The value of the check-in.  Always numeric, even if the goal is binary, in which case True is converted to 1 and False to 0.
+
+Errors:
+- Status code 400: Invalid request; see message
+- Status code 401: You must login or you do not own the goal in question
+- Status code 404: The specified goal does not exist
+
+**/goals/[id]/check-ins/current/**  
+Methods: GET
+Purpose: Get the check-in for a given goal for the current timeframe
+Requires login  
+Parameters: None
+
+Returns:
+- status code: 200 if the check-in exists
+- data:
+  - id: The id of the current check-in
+  - goal: The id of the goal
+  - timeframe: A representation of the timeframe, with fields
+    - id: the id of the timeframe
+    - frequency: The frequency of the timeframe; should match check-in frequency
+    - Start: The start of the timeframe for which this check-in applies, in format YYYY-MM-DD HH:mm:ss (e.g., 2016-01-01 00:00:00)
+    - End: The end of the timeframe for which this check-in applies, in format YYYY-MM-DD HH:mm:ss (e.g., 2016-01-01 00:00:00); timeframe does *not* include its end.
+  - value: The value of the check-in.  Always numeric, even if the goal is binary, in which case True is converted to 1 and False to 0.
+
+Errors:
+- Status code 400: Invalid request; see message
+- Status code 401: You must login or you do not own the goal in question
+- Status code 404: The specified goal or check-in does not exist
+
+**/goals/[id]/check-ins/[tfid]/**  
+Methods: GET
+Purpose: Get the check-in value for a given goal and timeframe
+Requires login  
+Parameters: None
+
+Returns:
+- status code: 200 if the check-in exists
+- data:
+  - id: The id of the current check-in
+  - goal: The id of the goal
+  - timeframe: A representation of the timeframe, with fields
+    - id: the id of the timeframe
+    - frequency: The frequency of the timeframe; should match check-in frequency
+    - Start: The start of the timeframe for which this check-in applies, in format YYYY-MM-DD HH:mm:ss (e.g., 2016-01-01 00:00:00)
+    - End: The end of the timeframe for which this check-in applies, in format YYYY-MM-DD HH:mm:ss (e.g., 2016-01-01 00:00:00); timeframe does *not* include its end.
+  - value: The value of the check-in.  Always numeric, even if the goal is binary, in which case True is converted to 1 and False to 0.
+
+Errors:
+- Status code 400: Invalid request; see message
+- Status code 401: You must login or you do not own the goal in question
+- Status code 404: The specified goal or check-in does not exist
+
+**/goals/[id]/check-ins/**  
+Methods: GET
+Purpose: Get an index of check-ins within a  given time window
+Requires login  
+Parameters: 
+- start: The start of the time window, in format YYYY-MM-DD hh:mm:ss (2016-01-01 00:00:00, e.g.)
+- end: The end of the time window, in format YYYY-MM-DD hh:mm:ss (2016-01-01 00:00:00, e.g.)
+
+Returns:
+- status code: 200
+- data:
+  - check-ins: an array of check-ins in format returned from /goals/[id]/check-ins/current/
+  
+Errors:
+- Status code 400: Invalid request; see message
+- Status code 401: You must login or you do not own the goal in question
+- Status code 404: The specified goal does not exist
  
 Installation
 ====
@@ -369,4 +459,4 @@ For alembic's migrations to work, Goly also expects an `alembic.ini` file at the
 
 Todos
 ====
-* Pretty much everything!
+* Build front-end!
